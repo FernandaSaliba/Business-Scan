@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "198083510769",
+    "project_id": "bussiness-scan",
+    "storage_bucket": "bussiness-scan.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:198083510769:android:85a3ccb0f2b0743b574450",
+        "android_client_info": {
+          "package_name": "com.example.business_scan"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "198083510769-c4964h7sud10fmfllqmul0mv87lepv99.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.business_scan",
+            "certificate_hash": "cb7a82721bbed9695d4d1689b203d7b2b71d252d"
+          }
+        },
+        {
+          "client_id": "198083510769-287vessuvr02ggtmun2f02r2m5bnmunh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGmKbyRK__rJzs220pUFksrwRkyZSg4dc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "198083510769-287vessuvr02ggtmun2f02r2m5bnmunh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
