@@ -160,7 +160,7 @@ fun SearchScreen(
 
                     Button(
                         onClick = onLogout,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F4568)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC3545)),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                     ) {
@@ -425,11 +425,19 @@ fun SearchScreen(
                                 } else {
                                     // 🟡 SE FOR GRATUITO, MOSTRA UM BOTÃO PARA DESBLOQUEAR O RELATÓRIO DESTE CNPJ
                                     Spacer(modifier = Modifier.height(12.dp))
-                                    Text(
-                                        text = "🔒 QSA, Capital Social e Alertas bloqueados na versão gratuita.",
-                                        color = Color.Gray,
-                                        fontSize = 11.sp
-                                    )
+                                    Button(
+                                        onClick = { onOpenPremium(business) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFB800)),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text(
+                                            text = "👑 SEJA PREMIUM PARA DADOS COMPLETOS",
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.Black,
+                                            fontSize = 12.sp
+                                        )
+                                    }
                                 }
                             }
                         }

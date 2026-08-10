@@ -76,12 +76,6 @@ fun PremiumScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Text(
-                text = "Desbloqueie o BusinessScan Pro 👑",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
 
 // 👇 CÓDIGO DA OPÇÃO 1 APLICADO AQUI
             business?.let { emp ->
