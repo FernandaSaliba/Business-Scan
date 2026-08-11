@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.business_scan.model.Business
+import com.example.business_scan.util.PdfGenerator
 import com.example.business_scan.viewmodel.SearchUiState
 import com.example.business_scan.viewmodel.SearchViewModel
 
@@ -76,7 +77,7 @@ class CnpjVisualTransformation : VisualTransformation {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    isPremium: Boolean = false,
+    isPremium: Boolean = true,
     onLogout: () -> Unit = {},
     onOpenPremium: (Business?) -> Unit = {},
     searchViewModel: SearchViewModel = viewModel()
@@ -421,6 +422,25 @@ fun SearchScreen(
                                                 fontSize = 12.sp
                                             )
                                         }
+                                    }
+
+                                    // 📄 BOTÃO PARA GERAR E BAIXAR O RELATÓRIO EM PDF
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    Button(
+                                        onClick = {
+                                            PdfGenerator.generateBusinessReportPdf(context, business)
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor)
+                                    ) {
+                                        Text(
+                                            text = "📄 BAIXAR RELATÓRIO EM PDF",
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White,
+                                            fontSize = 13.sp
+                                        )
                                     }
                                 } else {
                                     // 🟡 SE FOR GRATUITO, MOSTRA UM BOTÃO PARA DESBLOQUEAR O RELATÓRIO DESTE CNPJ

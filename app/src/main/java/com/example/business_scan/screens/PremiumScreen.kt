@@ -77,7 +77,7 @@ fun PremiumScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
 
-// 👇 CÓDIGO DA OPÇÃO 1 APLICADO AQUI
+//  Exibição dos dados da empresa
             business?.let { emp ->
                 Spacer(modifier = Modifier.height(8.dp))
                 Surface(
@@ -101,9 +101,20 @@ fun PremiumScreen(
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Botão de PDF dentro do escopo do emp
+                OutlinedButton(
+                    onClick = {
+                        com.example.business_scan.util.PdfGenerator.generateBusinessReportPdf(context, emp)
+                    },
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("📄 Baixar Relatório em PDF", color = Color.White)
+                }
+            }
 
             // --- PLANO MENSAL ---
             PlanOptionCard(

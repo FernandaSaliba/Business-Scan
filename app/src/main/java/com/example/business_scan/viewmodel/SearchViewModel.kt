@@ -1,9 +1,11 @@
 package com.example.business_scan.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.business_scan.model.Business
-import com.example.business_scan.model.EmpresaResponse
 import com.example.business_scan.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +16,15 @@ class SearchViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow<SearchUiState>(SearchUiState.Idle)
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
+
+    // 🔴 1. VARIÁVEL PARA GUARDAR A EMPRESA SELECIONADA
+    var selectedBusiness by mutableStateOf<Business?>(null)
+        private set
+
+    // 🔴 2. FUNÇÃO PARA MUDAR A EMPRESA MANUALLY (SE PRECISAR)
+    fun selectBusiness(business: Business?) {
+        selectedBusiness = business
+    }
 
     fun buscarPorCnpj(cnpjInput: String) {
         val cleanCnpj = cnpjInput.filter { it.isDigit() }
@@ -31,7 +42,12 @@ class SearchViewModel : ViewModel() {
 
                 if (response.isSuccessful && response.body() != null) {
                     val apiEmpresa = response.body()!!
-                    _uiState.value = SearchUiState.Success(apiEmpresa.toBusiness())
+                    val businessObj = apiEmpresa.toBusiness()
+
+                    // 🔴 3. GUARDA A EMPRESA AUTOMATICAMENTE AO ENCONTRAR
+                    selectedBusiness = businessObj
+
+                    _uiState.value = SearchUiState.Success(businessObj)
                 } else {
                     _uiState.value = SearchUiState.Error("CNPJ não encontrado.")
                 }
@@ -43,5 +59,6 @@ class SearchViewModel : ViewModel() {
 
     fun resetSearch() {
         _uiState.value = SearchUiState.Idle
+        selectedBusiness = null
     }
 }
