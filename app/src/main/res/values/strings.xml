@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">BusinessScan</string>
     <!-- Adicione o seu Web Client ID do Firebase Console aqui -->
-    <string name="default_web_client_id">198083510769-287vessuvr02ggtmun2f02r2m5bnmunh.apps.googleusercontent.com</string>
+    <string name="default_web_client_id">558379015018-c7r4ovuqf5h7ogr2vobm53ngd4vrsfjo.apps.googleusercontent.com</string>
 </resources>
