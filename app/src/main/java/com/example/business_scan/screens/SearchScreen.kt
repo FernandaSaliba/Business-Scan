@@ -38,6 +38,7 @@ import com.example.business_scan.model.Business
 import com.example.business_scan.util.PdfGenerator
 import com.example.business_scan.viewmodel.SearchUiState
 import com.example.business_scan.viewmodel.SearchViewModel
+import com.example.business_scan.data.UserPreferences // 👈 Import adicionado
 
 class CnpjVisualTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
@@ -77,7 +78,6 @@ class CnpjVisualTransformation : VisualTransformation {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    isPremium: Boolean = false,
     onLogout: () -> Unit = {},
     onOpenPremium: (Business?) -> Unit = {},
     searchViewModel: SearchViewModel = viewModel()
@@ -85,6 +85,10 @@ fun SearchScreen(
     var cnpjQuery by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
+
+    // 🟢 Leitura em tempo real do status de assinante via DataStore
+    val userPreferences = remember { UserPreferences(context) }
+    val isPremium by userPreferences.isPremiumFlow.collectAsState(initial = false)
 
     val uiState by searchViewModel.uiState.collectAsState()
     val cleanDigits = cnpjQuery.filter { it.isDigit() }

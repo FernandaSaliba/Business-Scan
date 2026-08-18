@@ -97,4 +97,7 @@ dependencies {
 
     // Google Play Billing Library com suporte a KTX
     implementation("com.android.billingclient:billing-ktx:6.2.1")
+
+    // Data Store
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 }

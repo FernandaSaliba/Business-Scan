@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.business_scan.model.Business
 import com.example.business_scan.util.BillingManager
+import com.example.business_scan.data.UserPreferences // 👈 Import necessário
+import kotlinx.coroutines.launch // 👈 Import necessário
 
 enum class PlanoType { MENSAL, ANUAL }
 
@@ -36,9 +38,17 @@ fun PremiumScreen(
     val context = LocalContext.current
     val activity = context as? Activity
 
+    // 🟢 Instância do UserPreferences e CoroutineScope
+    val userPreferences = remember { UserPreferences(context) }
+    val scope = rememberCoroutineScope()
+
     val billingManager = remember {
         BillingManager(context) { isSubscribed: Boolean ->
             if (isSubscribed) {
+                // 🟢 Salva o status Premium no DataStore ao confirmar a compra
+                scope.launch {
+                    userPreferences.setPremiumStatus(true)
+                }
                 Toast.makeText(context, "🎉 Assinatura Pro ativada com sucesso!", Toast.LENGTH_LONG).show()
                 onSubscribeSuccess()
             }

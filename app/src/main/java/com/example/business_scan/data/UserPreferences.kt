@@ -16,6 +16,7 @@ class UserPreferences(private val context: Context) {
     companion object {
         private val REMEMBER_ME = booleanPreferencesKey("remember_me")
         private val USER_EMAIL = stringPreferencesKey("user_email")
+        private val IS_PREMIUM = booleanPreferencesKey("is_premium") // 👈 Adicionado
     }
 
     // Flow para observar o estado do checkbox "Lembrar-me"
@@ -28,6 +29,11 @@ class UserPreferences(private val context: Context) {
         prefs[USER_EMAIL] ?: ""
     }
 
+    // 🟢 Flow para observar o status Premium em tempo real
+    val isPremiumFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[IS_PREMIUM] ?: false
+    }
+
     // Salva ou remove o e-mail dependendo da escolha do usuário
     suspend fun saveUserSession(remember: Boolean, email: String) {
         context.dataStore.edit { prefs ->
@@ -37,6 +43,13 @@ class UserPreferences(private val context: Context) {
             } else {
                 prefs.remove(USER_EMAIL)
             }
+        }
+    }
+
+    // 🟢 Salva ou atualiza o status de assinante Pro do usuário
+    suspend fun setPremiumStatus(isPremium: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[IS_PREMIUM] = isPremium
         }
     }
 
