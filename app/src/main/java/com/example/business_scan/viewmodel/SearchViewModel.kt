@@ -1,5 +1,6 @@
 package com.example.business_scan.viewmodel
 
+import android.graphics.Bitmap
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -7,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.business_scan.model.Business
 import com.example.business_scan.network.RetrofitClient
+import com.example.business_scan.util.OcrHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +21,16 @@ class SearchViewModel : ViewModel() {
 
     // Variável para guardar a empresa selecionada
     var selectedBusiness by mutableStateOf<Business?>(null)
+        private set
+
+    // Instância do Helper de OCR
+    private val ocrHelper = OcrHelper()
+
+    // Estado para guardar o texto escaneado e atualizar a tela em tempo real
+    var textoOcrResult by mutableStateOf("")
+        private set
+
+    var isProcessingOcr by mutableStateOf(false)
         private set
 
     // Função para mudar a empresa manualmente (mantida para uso futuro)
@@ -58,10 +70,26 @@ class SearchViewModel : ViewModel() {
         }
     }
 
+    // Função para processar o OCR a partir de um Bitmap
+    fun processarOcr(bitmap: Bitmap) {
+        isProcessingOcr = true
+        ocrHelper.processarImagem(
+            bitmap = bitmap,
+            onSuccess = { texto ->
+                textoOcrResult = texto
+                isProcessingOcr = false
+            },
+            onError = { _ ->
+                isProcessingOcr = false
+            }
+        )
+    }
+
     // Função para resetar a busca (mantida para uso futuro)
     @Suppress("unused")
     fun resetSearch() {
         _uiState.value = SearchUiState.Idle
         selectedBusiness = null
+        textoOcrResult = ""
     }
 }

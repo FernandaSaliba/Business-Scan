@@ -2,6 +2,12 @@ package com.example.business_scan.screens
 
 import android.content.ClipboardManager
 import android.content.Context
+import android.graphics.ImageDecoder
+import android.os.Build
+import android.provider.MediaStore
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -38,7 +44,7 @@ import com.example.business_scan.model.Business
 import com.example.business_scan.util.PdfGenerator
 import com.example.business_scan.viewmodel.SearchUiState
 import com.example.business_scan.viewmodel.SearchViewModel
-import com.example.business_scan.data.UserPreferences // 👈 Import adicionado
+import com.example.business_scan.data.UserPreferences
 
 class CnpjVisualTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
@@ -86,7 +92,6 @@ fun SearchScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
 
-    // 🟢 Leitura em tempo real do status de assinante via DataStore
     val userPreferences = remember { UserPreferences(context) }
     val isPremium by userPreferences.isPremiumFlow.collectAsState(initial = false)
 
@@ -96,13 +101,26 @@ fun SearchScreen(
 
     val currentBusiness = (uiState as? SearchUiState.Success)?.business
 
-    // Cores da interface
     val backgroundColor = Color(0xFF1B1F38)
     val cardBackgroundColor = Color(0xFF282D4F)
     val buttonPurpleColor = Color(0xFF6C5CE7)
     val premiumCardBg = Color(0xFF1E223D)
     val goldColor = Color(0xFFFFC107)
     val orangeButtonColor = Color(0xFFE67E22)
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it))
+            } else {
+                @Suppress("DEPRECATION")
+                MediaStore.Images.Media.getBitmap(context.contentResolver, it)
+            }
+            searchViewModel.processarOcr(bitmap)
+        }
+    }
 
     fun executarBusca() {
         if (isCnpjValid) {
@@ -126,7 +144,6 @@ fun SearchScreen(
             Column(modifier = Modifier.fillMaxWidth()) {
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Cabeçalho (BusinessScan + Botão Sair)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -175,7 +192,6 @@ fun SearchScreen(
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-                // Card da Busca por CNPJ
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
@@ -298,7 +314,104 @@ fun SearchScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Resultado / Estado Inicial
+                // Card de Digitalização / OCR Inteligente
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "📷 Digitalização Inteligente (OCR)",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = Color.White
+                            )
+                            if (!isPremium) {
+                                Surface(
+                                    color = goldColor.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(4.dp)
+                                ) {
+                                    Text(
+                                        text = "PRO",
+                                        color = goldColor,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Extraia textos e dados de documentos instantaneamente.",
+                            color = Color.LightGray,
+                            fontSize = 12.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = {
+                                if (isPremium) {
+                                    imagePickerLauncher.launch("image/*")
+                                } else {
+                                    Toast.makeText(context, "Recurso exclusivo para assinantes Premium!", Toast.LENGTH_SHORT).show()
+                                    onOpenPremium(currentBusiness)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor)
+                        ) {
+                            Text(
+                                text = if (isPremium) "SELECIONAR DOCUMENTO PARA OCR" else "👑 DESBLOQUEAR OCR INTELIGENTE",
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontSize = 13.sp
+                            )
+                        }
+
+                        if (searchViewModel.isProcessingOcr) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = goldColor)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = "Lendo documento...", color = Color.LightGray, fontSize = 11.sp)
+                        }
+
+                        if (searchViewModel.textoOcrResult.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Texto extraído:",
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontSize = 13.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Surface(
+                                color = backgroundColor,
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = searchViewModel.textoOcrResult,
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(8.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 when (val state = uiState) {
                     is SearchUiState.Idle -> {
                         Card(
@@ -445,7 +558,6 @@ fun SearchScreen(
                                         )
                                     }
                                 } else {
-                                    // 🟡 Apenas redireciona para a tela de planos
                                     Spacer(modifier = Modifier.height(12.dp))
                                     Button(
                                         onClick = { onOpenPremium(business) },
@@ -496,7 +608,6 @@ fun SearchScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Seção Inferior: Vantagens do Plano Premium (Apenas para não-assinantes)
             if (!isPremium) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Card(
@@ -516,9 +627,9 @@ fun SearchScreen(
                             Spacer(modifier = Modifier.height(12.dp))
 
                             val vantagens = listOf(
+                                "Digitalização e Leitura Inteligente (OCR)",
                                 "Análise completa de quadro sócio-administrador (QSA)",
                                 "Estimativa de faturamento e faixa de capital social",
-                                "Score de risco e histórico de alertas cadastrais",
                                 "Consultas ilimitadas sem anúncios"
                             )
 
@@ -545,7 +656,6 @@ fun SearchScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Botão Laranja "SEJA PREMIUM AGORA" que apenas navega para a tela de planos
                     Button(
                         onClick = { onOpenPremium(currentBusiness) },
                         modifier = Modifier
@@ -556,8 +666,7 @@ fun SearchScreen(
                     ) {
                         Text(
                             text = "👑 SEJA PREMIUM AGORA",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
+                             fontSize = 15.sp,
                             color = Color.White
                         )
                     }

@@ -96,7 +96,7 @@ fun BusinessScanTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = LargerTypography, // 👈 Aplicando os tamanhos maiores globalmente aqui
+        typography = LargerTypography,
         content = content
     )
 }
