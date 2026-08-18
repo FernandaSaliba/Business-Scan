@@ -77,7 +77,7 @@ class CnpjVisualTransformation : VisualTransformation {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    isPremium: Boolean = true,
+    isPremium: Boolean = false,
     onLogout: () -> Unit = {},
     onOpenPremium: (Business?) -> Unit = {},
     searchViewModel: SearchViewModel = viewModel()
@@ -92,7 +92,7 @@ fun SearchScreen(
 
     val currentBusiness = (uiState as? SearchUiState.Success)?.business
 
-    // Cores fiéis ao design da foto
+    // Cores da interface
     val backgroundColor = Color(0xFF1B1F38)
     val cardBackgroundColor = Color(0xFF282D4F)
     val buttonPurpleColor = Color(0xFF6C5CE7)
@@ -356,7 +356,6 @@ fun SearchScreen(
                                     )
                                 }
 
-                                // 🟢 SE FOR PREMIUM, EXIBE OS DADOS COMPLETOS RETORNADOS PELA BRASIL API
                                 if (isPremium) {
                                     HorizontalDivider(
                                         modifier = Modifier.padding(vertical = 12.dp),
@@ -424,7 +423,6 @@ fun SearchScreen(
                                         }
                                     }
 
-                                    // 📄 BOTÃO PARA GERAR E BAIXAR O RELATÓRIO EM PDF
                                     Spacer(modifier = Modifier.height(16.dp))
 
                                     Button(
@@ -443,7 +441,7 @@ fun SearchScreen(
                                         )
                                     }
                                 } else {
-                                    // 🟡 SE FOR GRATUITO, MOSTRA UM BOTÃO PARA DESBLOQUEAR O RELATÓRIO DESTE CNPJ
+                                    // 🟡 Apenas redireciona para a tela de planos
                                     Spacer(modifier = Modifier.height(12.dp))
                                     Button(
                                         onClick = { onOpenPremium(business) },
@@ -543,7 +541,7 @@ fun SearchScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Botão Laranja "SEJA PREMIUM AGORA"
+                    // Botão Laranja "SEJA PREMIUM AGORA" que apenas navega para a tela de planos
                     Button(
                         onClick = { onOpenPremium(currentBusiness) },
                         modifier = Modifier

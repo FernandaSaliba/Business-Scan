@@ -17,11 +17,12 @@ class SearchViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<SearchUiState>(SearchUiState.Idle)
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
-    // 🔴 1. VARIÁVEL PARA GUARDAR A EMPRESA SELECIONADA
+    // Variável para guardar a empresa selecionada
     var selectedBusiness by mutableStateOf<Business?>(null)
         private set
 
-    // 🔴 2. FUNÇÃO PARA MUDAR A EMPRESA MANUALLY (SE PRECISAR)
+    // Função para mudar a empresa manualmente (mantida para uso futuro)
+    @Suppress("unused")
     fun selectBusiness(business: Business?) {
         selectedBusiness = business
     }
@@ -44,7 +45,7 @@ class SearchViewModel : ViewModel() {
                     val apiEmpresa = response.body()!!
                     val businessObj = apiEmpresa.toBusiness()
 
-                    // 🔴 3. GUARDA A EMPRESA AUTOMATICAMENTE AO ENCONTRAR
+                    // Guarda a empresa automaticamente ao encontrar
                     selectedBusiness = businessObj
 
                     _uiState.value = SearchUiState.Success(businessObj)
@@ -57,6 +58,8 @@ class SearchViewModel : ViewModel() {
         }
     }
 
+    // Função para resetar a busca (mantida para uso futuro)
+    @Suppress("unused")
     fun resetSearch() {
         _uiState.value = SearchUiState.Idle
         selectedBusiness = null

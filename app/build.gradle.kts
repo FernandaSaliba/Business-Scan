@@ -94,4 +94,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Google Play Billing Library com suporte a KTX
+    implementation("com.android.billingclient:billing-ktx:6.2.1")
 }
