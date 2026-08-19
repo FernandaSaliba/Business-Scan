@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
+    id("com.google.devtools.ksp") version "2.3.0"
 }
 
 android {
@@ -68,7 +69,7 @@ dependencies {
 
     // Navegacao, ViewModel e Icones para Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-    implementation("androidx.navigation:navigation-compose:2.8.5")
+    implementation("androidx.navigation:navigation-compose:2.9.8")
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
 
     // Credentials Manager & Autenticacao Google
@@ -83,8 +84,8 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.2.1")
 
     // RevenueCat Purchases SDK
-    implementation("com.revenuecat.purchases:purchases:10.16.0")
-    implementation("com.revenuecat.purchases:purchases-ui:10.16.0")
+    implementation("com.revenuecat.purchases:purchases:10.17.0")
+    implementation("com.revenuecat.purchases:purchases-ui:10.17.0")
 
     // Testes
     testImplementation(libs.junit)
@@ -96,11 +97,13 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     // Google Play Billing Library com suporte a KTX
-    implementation("com.android.billingclient:billing-ktx:6.2.1")
-
-    // Data Store
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("com.android.billingclient:billing-ktx:9.1.0")
 
     // Google ML Kit Text Recognition
     implementation("com.google.mlkit:text-recognition:16.0.1")
+
+    // Room components
+    implementation("androidx.room:room-runtime:2.8.4")
+    implementation("androidx.room:room-ktx:2.8.4")
+    ksp("androidx.room:room-compiler:2.8.4")
 }

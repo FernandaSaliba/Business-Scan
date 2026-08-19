@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -63,14 +64,8 @@ fun LoginScreen(
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    // Resgate seguro do ID do cliente utilizando o Context do Android em vez de envolver uma chamada @Composable no runCatching
-    val fallbackClientId = remember(context) {
-        try {
-            context.getString(R.string.default_web_client_id)
-        } catch (_: Exception) {
-            ""
-        }
-    }
+    // Resgate seguro utilizando o recurso nativo do Compose sem try-catch bloqueando o Composable
+    val fallbackClientId = stringResource(R.string.default_web_client_id)
 
     val isEmailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
     val isPasswordValid = password.length >= 6
@@ -194,7 +189,6 @@ fun LoginScreen(
                 }
             } catch (_: GetCredentialCancellationException) {
                 isLoading = false
-                // O usuário fechou a caixinha de login do Google (não faz nada ou mostra aviso)
             } catch (_: GetCredentialException) {
                 isLoading = false
                 Toast.makeText(context, "Erro nas credenciais do Google. Verifique a chave Web Client ID.", Toast.LENGTH_LONG).show()
@@ -333,7 +327,6 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Marcador Lembrar de Mim
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier

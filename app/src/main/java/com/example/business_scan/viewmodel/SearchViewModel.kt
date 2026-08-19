@@ -1,11 +1,14 @@
 package com.example.business_scan.viewmodel
 
+import android.app.Application
 import android.graphics.Bitmap
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.business_scan.data.local.AppDatabase
+import com.example.business_scan.data.local.DocumentoOcrEntity
 import com.example.business_scan.model.Business
 import com.example.business_scan.network.RetrofitClient
 import com.example.business_scan.util.OcrHelper
@@ -14,7 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class SearchViewModel : ViewModel() {
+class SearchViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow<SearchUiState>(SearchUiState.Idle)
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
@@ -25,6 +28,9 @@ class SearchViewModel : ViewModel() {
 
     // Instância do Helper de OCR
     private val ocrHelper = OcrHelper()
+
+    // Instância do DAO do Room para salvar o histórico de OCR
+    private val dao = AppDatabase.getDatabase(getApplication()).documentOcrDao()
 
     // Estado para guardar o texto escaneado e atualizar a tela em tempo real
     var textoOcrResult by mutableStateOf("")
@@ -78,6 +84,13 @@ class SearchViewModel : ViewModel() {
             onSuccess = { texto ->
                 textoOcrResult = texto
                 isProcessingOcr = false
+
+                // Salva o texto extraído automaticamente no banco de dados Room
+                viewModelScope.launch {
+                    dao.insertDocumento(
+                        DocumentoOcrEntity(textoExtraido = texto)
+                    )
+                }
             },
             onError = { _ ->
                 isProcessingOcr = false
