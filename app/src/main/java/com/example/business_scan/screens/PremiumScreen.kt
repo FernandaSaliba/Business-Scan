@@ -24,8 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.business_scan.model.Business
 import com.example.business_scan.util.BillingManager
-import com.example.business_scan.data.UserPreferences // 👈 Import necessário
-import kotlinx.coroutines.launch // 👈 Import necessário
+import com.example.business_scan.data.UserPreferences
+import kotlinx.coroutines.launch
 
 enum class PlanoType { MENSAL, ANUAL }
 
@@ -38,14 +38,12 @@ fun PremiumScreen(
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // 🟢 Instância do UserPreferences e CoroutineScope
     val userPreferences = remember { UserPreferences(context) }
     val scope = rememberCoroutineScope()
 
     val billingManager = remember {
         BillingManager(context) { isSubscribed: Boolean ->
             if (isSubscribed) {
-                // 🟢 Salva o status Premium no DataStore ao confirmar a compra
                 scope.launch {
                     userPreferences.setPremiumStatus(true)
                 }
@@ -94,11 +92,16 @@ fun PremiumScreen(
             Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)), modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Text(text = "Tudo o que você terá acesso:", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.White)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Vantagens atualizadas incluindo as novas funcionalidades
+                    BenefitRow(text = "Digitalização e Leitura Inteligente (OCR)")
+                    BenefitRow(text = "Assinatura Digital automática via RG")
                     BenefitRow(text = "Quadro de Sócios e Administradores (QSA)")
                     BenefitRow(text = "Capital Social e Faturamento Estimado")
                     BenefitRow(text = "Score de Risco Fiscal e Histórico de Alertas")
-                    BenefitRow(text = "Exportação de relatórios em PDF")
-                    BenefitRow(text = "Consultas ilimitadas sem restrição diária")
+                    BenefitRow(text = "Segurança Criptografada e Backup em Nuvem")
+                    BenefitRow(text = "Exportação ilimitada de relatórios em PDF")
+                    BenefitRow(text = "Consultas ilimitadas sem anúncios")
                 }
             }
 
@@ -123,8 +126,6 @@ fun PremiumScreen(
         }
     }
 }
-
-// 🟢 MANTENHA ESSAS FUNÇÕES ABAIXO NO FINAL DO ARQUIVO:
 
 @Composable
 fun PlanOptionCard(title: String, subtitle: String, price: String, badgeText: String? = null, isSelected: Boolean, onClick: () -> Unit) {

@@ -11,9 +11,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.example.business_scan.data.UserPreferences
 import com.example.business_scan.model.Business
+import com.example.business_scan.screens.HomeScreen
 import com.example.business_scan.screens.LoginScreen
+import com.example.business_scan.screens.OcrScreen
 import com.example.business_scan.screens.PremiumScreen
 import com.example.business_scan.screens.SearchScreen
+import com.example.business_scan.screens.SignatureCaptureScreen
 import com.example.business_scan.screens.SplashScreen
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -33,6 +36,7 @@ class MainActivity : ComponentActivity() {
             val isLoggedIn = remember { mutableStateOf(false) }
             val showSplash = remember { mutableStateOf(true) }
 
+            // Inicia direto na tela de busca ("search")
             val currentScreen = remember { mutableStateOf("search") }
             val selectedBusinessForPro = remember { mutableStateOf<Business?>(null) }
 
@@ -58,6 +62,13 @@ class MainActivity : ComponentActivity() {
                 )
             } else {
                 when (currentScreen.value) {
+                    "home" -> HomeScreen()
+                    "signature" -> SignatureCaptureScreen(
+                        onNavigateBack = { currentScreen.value = "search" }
+                    )
+                    "ocr" -> OcrScreen(
+                        onNavigateBack = { currentScreen.value = "search" }
+                    )
                     "search" -> SearchScreen(
                         onLogout = {
                             scope.launch {
@@ -70,7 +81,10 @@ class MainActivity : ComponentActivity() {
                         onOpenPremium = { business ->
                             selectedBusinessForPro.value = business
                             currentScreen.value = "premium"
-                        }
+                        },
+                        onNavigateToSignature = {
+                            currentScreen.value = "signature"
+                        } // 👈 Adicionado para abrir a tela de assinatura a partir da busca
                     )
                     "premium" -> PremiumScreen(
                         business = selectedBusinessForPro.value,

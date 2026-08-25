@@ -3,6 +3,7 @@ package com.example.business_scan.util
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -18,10 +19,12 @@ import java.io.FileOutputStream
 
 object PdfGenerator {
 
+    /**
+     * FUNÇÃO 1: Apenas o Relatório de CNPJ (Inalterada, sem mistura com assinatura)
+     */
     fun generateBusinessReportPdf(context: Context, business: Business?): File? {
         val pdfDocument = PdfDocument()
 
-        // Configuração de Pincéis (Fontes e Cores)
         val titlePaint = Paint().apply {
             color = Color.parseColor("#1E293B")
             textSize = 18f
@@ -50,16 +53,14 @@ object PdfGenerator {
             strokeWidth = 1.5f
         }
 
-        // Controle de Páginas
         var pageNum = 1
         var pageInfo = PdfDocument.PageInfo.Builder(595, 842, pageNum).create()
         var currentPage = pdfDocument.startPage(pageInfo)
         var canvas: Canvas = currentPage.canvas
         var y = 50f
 
-        // Função auxiliar para quebra de página automática
         fun checkAndCreateNewPage(requiredSpace: Float = 20f) {
-            if (y + requiredSpace > 790f) { // Limite inferior da página A4
+            if (y + requiredSpace > 790f) {
                 pdfDocument.finishPage(currentPage)
                 pageNum++
                 pageInfo = PdfDocument.PageInfo.Builder(595, 842, pageNum).create()
@@ -69,29 +70,25 @@ object PdfGenerator {
             }
         }
 
-        // Cabeçalho do documento
+        // Cabeçalho
         canvas.drawText("Business Scan - Relatório Cadastral Avançado", 40f, y, titlePaint)
         y += 15f
         canvas.drawLine(40f, y, 555f, y, linePaint)
         y += 30f
 
-        // Conteúdo da Empresa
         if (business != null) {
-            // Razão Social
             checkAndCreateNewPage(45f)
             canvas.drawText("Razão Social / Nome:", 40f, y, sectionPaint)
             y += 18f
             canvas.drawText(business.name, 40f, y, boldBodyPaint)
             y += 25f
 
-            // Situação Cadastral
             checkAndCreateNewPage(20f)
             canvas.drawText("Situação Cadastral:", 40f, y, sectionPaint)
             val statusText = business.situacaoCadastral.ifEmpty { "INATIVA" }
             canvas.drawText(statusText, 170f, y, bodyPaint)
             y += 20f
 
-            // CNAE / Atividade
             if (business.cnae.isNotEmpty()) {
                 checkAndCreateNewPage(40f)
                 canvas.drawText("Atividade (CNAE):", 40f, y, sectionPaint)
@@ -100,19 +97,16 @@ object PdfGenerator {
                 y += 22f
             }
 
-            // Capital Social
             checkAndCreateNewPage(20f)
             canvas.drawText("Capital Social:", 40f, y, sectionPaint)
             canvas.drawText(business.capitalSocialFormatado, 170f, y, bodyPaint)
             y += 20f
 
-            // Porte Estimado
             checkAndCreateNewPage(20f)
             canvas.drawText("Porte Estimado:", 40f, y, sectionPaint)
             canvas.drawText(business.estimativaFaturamento, 170f, y, bodyPaint)
             y += 20f
 
-            // Endereço
             if (business.endereco.isNotEmpty()) {
                 checkAndCreateNewPage(45f)
                 canvas.drawText("Endereço:", 40f, y, sectionPaint)
@@ -122,12 +116,10 @@ object PdfGenerator {
                 y += 25f
             }
 
-            // Divisor para Quadro de Sócios
             checkAndCreateNewPage(25f)
             canvas.drawLine(40f, y, 555f, y, linePaint)
             y += 25f
 
-            // Quadro de Sócios e Administradores (QSA)
             checkAndCreateNewPage(20f)
             canvas.drawText("👥 Quadro de Sócios e Administradores (QSA):", 40f, y, sectionPaint)
             y += 20f
@@ -138,23 +130,79 @@ object PdfGenerator {
                 y += 20f
             } else {
                 business.qsa.forEach { socio ->
-                    checkAndCreateNewPage(18f) // Verifica se o próximo sócio cabe na página
+                    checkAndCreateNewPage(18f)
                     val cargo = socio.cargo.ifEmpty { "Sócio" }
                     canvas.drawText("• ${socio.nome} ($cargo)", 45f, y, bodyPaint)
                     y += 18f
                 }
             }
-
         } else {
             canvas.drawText("Informações do negócio indisponíveis.", 40f, y, bodyPaint)
             y += 25f
         }
 
         pdfDocument.finishPage(currentPage)
-
         val cleanName = business?.name?.replace("[^a-zA-Z0-9_]".toRegex(), "_") ?: "Business"
-        val fileName = "Relatorio_${cleanName}.pdf"
+        return saveAndReturnPdf(context, pdfDocument, "Relatorio_${cleanName}.pdf")
+    }
 
+    /**
+     * FUNÇÃO 2: Apenas para Documentos Escaneados com Assinatura do RG (Totalmente Separada)
+     */
+    fun generateSignedDocumentPdf(context: Context, documentContent: String, customTitle: String): File? {
+        val pdfDocument = PdfDocument()
+
+        val titlePaint = Paint().apply {
+            color = Color.parseColor("#1E293B")
+            textSize = 16f
+            isFakeBoldText = true
+        }
+
+        val bodyPaint = Paint().apply {
+            color = Color.parseColor("#334155")
+            textSize = 11f
+        }
+
+        val linePaint = Paint().apply {
+            color = Color.parseColor("#CBD5E1")
+            strokeWidth = 1.5f
+        }
+
+        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
+        val currentPage = pdfDocument.startPage(pageInfo)
+        val canvas: Canvas = currentPage.canvas
+        var y = 50f
+
+        // Cabeçalho do documento escaneado
+        canvas.drawText(customTitle, 40f, y, titlePaint)
+        y += 15f
+        canvas.drawLine(40f, y, 555f, y, linePaint)
+        y += 30f
+
+        // Conteúdo do texto escaneado (OCR)
+        canvas.drawText(documentContent, 40f, y, bodyPaint)
+
+        // Aplica a assinatura do RG capturada anteriormente
+        val signatureBitmap = SignatureManager.getSavedSignature(context)
+        if (signatureBitmap != null) {
+            y = 700f // Posição fixa inferior para a assinatura no documento escaneado
+            canvas.drawLine(40f, y, 250f, y, linePaint)
+            y += 10f
+            canvas.drawText("Assinado digitalmente via RG", 40f, y, bodyPaint)
+            y += 15f
+
+            val scaledSignature = Bitmap.createScaledBitmap(signatureBitmap, 180, 60, true)
+            canvas.drawBitmap(scaledSignature, 40f, y, null)
+        }
+
+        pdfDocument.finishPage(currentPage)
+        return saveAndReturnPdf(context, pdfDocument, "DocumentoAssinado.pdf")
+    }
+
+    /**
+     * Função auxiliar interna para salvar o arquivo (evita duplicação de código de salvamento)
+     */
+    private fun saveAndReturnPdf(context: Context, pdfDocument: PdfDocument, fileName: String): File? {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val contentValues = ContentValues().apply {
@@ -169,10 +217,8 @@ object PdfGenerator {
                 resolver.openOutputStream(uri)?.use { outputStream ->
                     pdfDocument.writeTo(outputStream)
                 }
-
                 pdfDocument.close()
-                Toast.makeText(context, "PDF gerado com sucesso!", Toast.LENGTH_LONG).show()
-
+                Toast.makeText(context, "PDF gerado com sucesso!", Toast.LENGTH_SHORT).show()
                 openPdfIntent(context, uri)
                 return null
             } else {
@@ -190,10 +236,8 @@ object PdfGenerator {
                     "${context.packageName}.provider",
                     file
                 )
-
                 pdfDocument.close()
-                Toast.makeText(context, "PDF gerado com sucesso!", Toast.LENGTH_LONG).show()
-
+                Toast.makeText(context, "PDF gerado com sucesso!", Toast.LENGTH_SHORT).show()
                 openPdfIntent(context, uri)
                 return file
             }

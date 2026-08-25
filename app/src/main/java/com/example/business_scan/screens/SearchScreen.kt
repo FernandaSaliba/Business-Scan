@@ -86,6 +86,7 @@ class CnpjVisualTransformation : VisualTransformation {
 fun SearchScreen(
     onLogout: () -> Unit = {},
     onOpenPremium: (Business?) -> Unit = {},
+    onNavigateToSignature: () -> Unit = {},
     searchViewModel: SearchViewModel = viewModel()
 ) {
     var cnpjQuery by remember { mutableStateOf("") }
@@ -412,38 +413,77 @@ fun SearchScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                when (val state = uiState) {
-                    is SearchUiState.Idle -> {
-                        Card(
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
-                            modifier = Modifier.fillMaxWidth()
+                // ✍Botão para assinatura digital
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .padding(24.dp)
-                                    .fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text("🔍", fontSize = 38.sp)
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "Pronto para consultar",
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Digite um CNPJ de 14 dígitos acima para verificar a situação cadastral na Receita Federal.",
-                                    color = Color.LightGray,
-                                    fontSize = 12.sp,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                )
+                            Text(
+                                text = "✍️ Assinatura Digital via RG",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = Color.White
+                            )
+                            if (!isPremium) {
+                                Surface(
+                                    color = goldColor.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(4.dp)
+                                ) {
+                                    Text(
+                                        text = "PRO",
+                                        color = goldColor,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                    )
+                                }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Cadastre sua assinatura para anexá-la automaticamente em relatórios.",
+                            color = Color.LightGray,
+                            fontSize = 12.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = {
+                                if (isPremium) {
+                                    onNavigateToSignature()
+                                } else {
+                                    Toast.makeText(context, "Recurso exclusivo para assinantes Premium!", Toast.LENGTH_SHORT).show()
+                                    onOpenPremium(currentBusiness)
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp), // 👈 Altura mais compacta
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor) // 👈 Mesma cor roxa do OCR
+                        ) {
+                            Text(
+                                text = if (isPremium) "CONFIGURAR ASSINATURA" else "👑 DESBLOQUEAR ASSINATURA DIGITAL",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = Color.White
+                            )
+                        }
                     }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                when (val state = uiState) {
 
                     is SearchUiState.Success -> {
                         val business = state.business
@@ -606,12 +646,12 @@ fun SearchScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             if (!isPremium) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Card(
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = premiumCardBg),
                         border = BorderStroke(1.dp, goldColor),
                         modifier = Modifier.fillMaxWidth()
@@ -620,7 +660,7 @@ fun SearchScreen(
                             Text(
                                 text = "✨ Vantagens do Plano Premium",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
+                                fontSize = 14.sp,
                                 color = goldColor
                             )
 
@@ -628,6 +668,7 @@ fun SearchScreen(
 
                             val vantagens = listOf(
                                 "Digitalização e Leitura Inteligente (OCR)",
+                                "Assinatura Digital de documentos via RG",
                                 "Análise completa de quadro sócio-administrador (QSA)",
                                 "Estimativa de faturamento e faixa de capital social",
                                 "Consultas ilimitadas sem anúncios"
@@ -660,18 +701,18 @@ fun SearchScreen(
                         onClick = { onOpenPremium(currentBusiness) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp),
+                            .height(46.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = orangeButtonColor)
                     ) {
                         Text(
                             text = "👑 SEJA PREMIUM AGORA",
-                             fontSize = 15.sp,
+                             fontSize = 14.sp,
                             color = Color.White
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(28.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }

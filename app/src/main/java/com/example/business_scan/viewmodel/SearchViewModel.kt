@@ -11,7 +11,10 @@ import com.example.business_scan.data.local.AppDatabase
 import com.example.business_scan.data.local.DocumentoOcrEntity
 import com.example.business_scan.model.Business
 import com.example.business_scan.network.RetrofitClient
+import com.example.business_scan.util.CryptoManager
 import com.example.business_scan.util.OcrHelper
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -85,17 +88,43 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 textoOcrResult = texto
                 isProcessingOcr = false
 
-                // Salva o texto extraído automaticamente no banco de dados Room
+                // 1. Criptografa o texto extraído pelo OCR antes de salvar
+                val textoCriptografado = CryptoManager.encrypt(texto)
+
+                // 2. Salva o texto criptografado no banco de dados local (Room)
                 viewModelScope.launch {
                     dao.insertDocumento(
-                        DocumentoOcrEntity(textoExtraido = texto)
+                        DocumentoOcrEntity(textoExtraido = textoCriptografado)
                     )
                 }
+
+                // 3. Envia o texto criptografado para o Firestore (nuvem)
+                salvarNoFirestore(textoCriptografado)
             },
             onError = { _ ->
                 isProcessingOcr = false
             }
         )
+    }
+
+    private fun salvarNoFirestore(textoCriptografado: String) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val db = FirebaseFirestore.getInstance()
+
+        val dados = hashMapOf(
+            "userId" to userId,
+            "conteudo" to textoCriptografado,
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        db.collection("documentos_ocr")
+            .add(dados)
+            .addOnSuccessListener {
+                // Sucesso ao salvar na nuvem
+            }
+            .addOnFailureListener {
+                // Tratamento de falha silencioso ou log se necessário
+            }
     }
 
     // Função para resetar a busca (mantida para uso futuro)
