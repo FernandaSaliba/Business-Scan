@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
     id("com.google.devtools.ksp") version "2.3.0"
+
 }
 
 android {
@@ -11,7 +12,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.business_scan"
+        applicationId = "com.rodertech.businessscan"
         minSdk = 24
         targetSdk = 34
 
@@ -50,7 +51,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 
 dependencies {
     // Import do Firebase BoM (Versao atualizada)
-    implementation(platform("com.google.firebase:firebase-bom:34.17.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.18.0"))
 
     // Dependencias de produtos do Firebase
     implementation("com.google.firebase:firebase-analytics")

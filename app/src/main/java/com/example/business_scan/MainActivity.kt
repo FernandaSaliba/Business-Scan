@@ -1,5 +1,6 @@
 package com.example.business_scan
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,17 +10,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import com.example.business_scan.data.UserPreferences
 import com.example.business_scan.model.Business
+import com.example.business_scan.screens.DocumentCaptureScreen
 import com.example.business_scan.screens.HomeScreen
 import com.example.business_scan.screens.LoginScreen
 import com.example.business_scan.screens.OcrScreen
 import com.example.business_scan.screens.PremiumScreen
 import com.example.business_scan.screens.SearchScreen
 import com.example.business_scan.screens.SignatureCaptureScreen
+import com.example.business_scan.screens.SignaturePlacementScreen
 import com.example.business_scan.screens.SplashScreen
+import com.example.business_scan.util.DocumentStamper
+import com.example.business_scan.repository.SecureDocumentRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : ComponentActivity() {
 
@@ -30,6 +38,7 @@ class MainActivity : ComponentActivity() {
         val googleWebClientId = "198083510769-287vessuvr02ggtmun2f02r2m5bnmunh.apps.googleusercontent.com"
 
         setContent {
+            val context = LocalContext.current
             val scope = rememberCoroutineScope()
             val rememberMeState by userPreferences.rememberMeFlow.collectAsState(initial = false)
 
@@ -39,6 +48,10 @@ class MainActivity : ComponentActivity() {
             // Inicia direto na tela de busca ("search")
             val currentScreen = remember { mutableStateOf("search") }
             val selectedBusinessForPro = remember { mutableStateOf<Business?>(null) }
+
+            // Estados temporários para guardar os Bitmaps durante o fluxo de assinatura
+            val documentToSignBitmap = remember { mutableStateOf<Bitmap?>(null) }
+            val signatureBitmapToUse = remember { mutableStateOf<Bitmap?>(null) }
 
             LaunchedEffect(rememberMeState) {
                 if (rememberMeState || FirebaseAuth.getInstance().currentUser != null) {
@@ -66,6 +79,73 @@ class MainActivity : ComponentActivity() {
                     "signature" -> SignatureCaptureScreen(
                         onNavigateBack = { currentScreen.value = "search" }
                     )
+                    "document_capture" -> DocumentCaptureScreen(
+                        onDocumentCaptured = { docBitmap, sigBitmap ->
+                            documentToSignBitmap.value = docBitmap
+                            signatureBitmapToUse.value = sigBitmap
+                            currentScreen.value = "signature_placement"
+                        },
+                        onNavigateToCaptureSignature = {
+                            currentScreen.value = "signature"
+                        }
+                    )
+                    "signature_placement" -> {
+                        val doc = documentToSignBitmap.value
+                        val sig = signatureBitmapToUse.value
+                        if (doc != null && sig != null) {
+                            SignaturePlacementScreen(
+                                documentBitmap = doc,
+                                signatureBitmap = sig,
+                                onConfirmPosition = { offsetX, offsetY, width, height ->
+                                    // 1. Carimba o documento na posição escolhida
+                                    val signedBitmap = DocumentStamper.stampSignature(
+                                        documentBitmap = doc,
+                                        signatureBitmap = sig,
+                                        screenOffsetX = offsetX,
+                                        screenOffsetY = offsetY,
+                                        displayedWidth = width,
+                                        displayedHeight = height
+                                    )
+
+                                    val documentId = "doc_" + System.currentTimeMillis()
+
+                                    // 2. Envia criptografado para o Firebase Storage
+                                    SecureDocumentRepository.uploadEncryptedDocumentToFirebase(
+                                        documentId = documentId,
+                                        signedBitmap = signedBitmap,
+                                        onSuccess = { /* Sucesso na nuvem */ },
+                                        onError = { /* Tratar erro se necessário */ }
+                                    )
+
+                                    // 3. Salva e abre o compartilhamento imediato
+                                    val cachePath = File(context.cacheDir, "images")
+                                    cachePath.mkdirs()
+                                    val file = File(cachePath, "documento_assinado_final.png")
+                                    FileOutputStream(file).use { stream ->
+                                        signedBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                                    }
+
+                                    val uri = androidx.core.content.FileProvider.getUriForFile(
+                                        context,
+                                        "${context.packageName}.provider",
+                                        file
+                                    )
+
+                                    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                        type = "image/png"
+                                        putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                                        addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+                                    context.startActivity(android.content.Intent.createChooser(intent, "Enviar documento assinado via:"))
+
+                                    // Retorna para a busca após concluir
+                                    currentScreen.value = "search"
+                                }
+                            )
+                        } else {
+                            currentScreen.value = "document_capture"
+                        }
+                    }
                     "ocr" -> OcrScreen(
                         onNavigateBack = { currentScreen.value = "search" }
                     )
@@ -83,8 +163,9 @@ class MainActivity : ComponentActivity() {
                             currentScreen.value = "premium"
                         },
                         onNavigateToSignature = {
-                            currentScreen.value = "signature"
-                        } // 👈 Adicionado para abrir a tela de assinatura a partir da busca
+                            // Agora aponta para iniciar o fluxo completo de escanear o documento a ser assinado
+                            currentScreen.value = "document_capture"
+                        }
                     )
                     "premium" -> PremiumScreen(
                         business = selectedBusinessForPro.value,

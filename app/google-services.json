@@ -41,6 +41,43 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:198083510769:android:af2aeb25ad7e9e53574450",
+        "android_client_info": {
+          "package_name": "com.rodertech.businessscan"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "198083510769-533k2va2psjgprdhj7qrpnc3qq9qum01.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rodertech.businessscan",
+            "certificate_hash": "cb7a82721bbed9695d4d1689b203d7b2b71d252d"
+          }
+        },
+        {
+          "client_id": "198083510769-287vessuvr02ggtmun2f02r2m5bnmunh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGmKbyRK__rJzs220pUFksrwRkyZSg4dc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "198083510769-287vessuvr02ggtmun2f02r2m5bnmunh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"
