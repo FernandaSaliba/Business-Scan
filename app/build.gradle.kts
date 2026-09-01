@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.business_scan"
+    namespace = "com.rodertech.business_scan"
     compileSdk = 36
 
     defaultConfig {
@@ -16,8 +16,8 @@ android {
         minSdk = 24
         targetSdk = 34
 
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -87,6 +87,7 @@ dependencies {
     // RevenueCat Purchases SDK
     implementation("com.revenuecat.purchases:purchases:10.17.0")
     implementation("com.revenuecat.purchases:purchases-ui:10.17.0")
+
 
     // Testes
     testImplementation(libs.junit)
