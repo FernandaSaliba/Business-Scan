@@ -26,7 +26,6 @@ fun SignatureCaptureScreen(
     var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var mensagemSucesso by remember { mutableStateOf(false) }
 
-    // Launcher para selecionar a foto do RG/Documento na galeria
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->

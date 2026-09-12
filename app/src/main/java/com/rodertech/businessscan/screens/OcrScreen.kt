@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +22,6 @@ import com.rodertech.businessscan.util.OcrHelper
 private val darkBg = Color(0xFF0F172A)
 private val cardBg = Color(0xFF1E293B)
 private val primaryText = Color.White
-private val secondaryText = Color.Gray
 private val accentColor = Color(0xFF818CF8)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,11 +30,11 @@ fun OcrScreen(
     onNavigateBack: () -> Unit
 ) {
     val ocrHelper = remember { OcrHelper() }
+
     var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var extractedText by remember { mutableStateOf("Nenhum texto extraído ainda. Tire a foto de um documento.") }
     var isLoading by remember { mutableStateOf(false) }
 
-    // Launcher para abrir a câmera nativa e capturar a prévia da imagem
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap ->
@@ -46,7 +44,7 @@ fun OcrScreen(
             ocrHelper.processarImagem(
                 bitmap = bitmap,
                 onSuccess = { text ->
-                    extractedText = if (text.isBlank()) "Nenhum texto identificado na imagem." else text
+                    extractedText = text.ifBlank { "Nenhum texto identificado na imagem." }
                     isLoading = false
                 },
                 onError = { exception ->
@@ -80,7 +78,6 @@ fun OcrScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Botão para disparar a câmera
             Button(
                 onClick = { cameraLauncher.launch(null) },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -90,8 +87,8 @@ fun OcrScreen(
                 Text(text = "📷 Tirar Foto do Documento", fontWeight = FontWeight.Bold, color = Color.White)
             }
 
-            // Exibição da imagem capturada (se houver)
-            if (capturedBitmap != null) {
+            val currentBitmap = capturedBitmap
+            if (currentBitmap != null) {
                 Card(
                     modifier = Modifier.fillMaxWidth().height(220.dp),
                     shape = RoundedCornerShape(16.dp),
@@ -99,7 +96,7 @@ fun OcrScreen(
                 ) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Image(
-                            bitmap = capturedBitmap!!.asImageBitmap(),
+                            bitmap = currentBitmap.asImageBitmap(),
                             contentDescription = "Documento capturado",
                             modifier = Modifier.fillMaxSize().padding(8.dp)
                         )
@@ -107,7 +104,6 @@ fun OcrScreen(
                 }
             }
 
-            // Card com o resultado do OCR
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),

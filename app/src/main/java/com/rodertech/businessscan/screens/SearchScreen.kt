@@ -3,7 +3,6 @@ package com.rodertech.businessscan.screens
 import android.graphics.ImageDecoder
 import android.os.Build
 import android.provider.MediaStore
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -26,6 +25,7 @@ import com.rodertech.businessscan.model.Business
 import com.rodertech.businessscan.viewmodel.SearchUiState
 import com.rodertech.businessscan.viewmodel.SearchViewModel
 import com.rodertech.businessscan.data.UserPreferences
+import com.rodertech.businessscan.util.RewardedAdManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +39,12 @@ fun SearchScreen(
     val context = LocalContext.current
     val userPreferences = remember { UserPreferences(context) }
     val isPremium by userPreferences.isPremiumFlow.collectAsState(initial = false)
+
+    val rewardedManager = remember { RewardedAdManager(context) }
+
+    LaunchedEffect(Unit) {
+        rewardedManager.loadAd()
+    }
 
     val uiState by searchViewModel.uiState.collectAsState()
     val currentBusiness = (uiState as? SearchUiState.Success)?.business
@@ -218,8 +224,9 @@ fun SearchScreen(
                                 if (isPremium) {
                                     imagePickerLauncher.launch("image/*")
                                 } else {
-                                    Toast.makeText(context, "Recurso exclusivo para assinantes Premium!", Toast.LENGTH_SHORT).show()
-                                    onOpenPremium(currentBusiness)
+                                    rewardedManager.showAd {
+                                        imagePickerLauncher.launch("image/*")
+                                    }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -227,7 +234,7 @@ fun SearchScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor)
                         ) {
                             Text(
-                                text = if (isPremium) "SELECIONAR DOCUMENTO PARA OCR" else "👑 DESBLOQUEAR OCR INTELIGENTE",
+                                text = if (isPremium) "SELECIONAR DOCUMENTO PARA OCR" else "📺 ASSISTIR ANÚNCIO PARA OCR",
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
                                 fontSize = 13.sp
@@ -316,18 +323,19 @@ fun SearchScreen(
                                 if (isPremium) {
                                     onNavigateToSignature()
                                 } else {
-                                    Toast.makeText(context, "Recurso exclusivo para assinantes Premium!", Toast.LENGTH_SHORT).show()
-                                    onOpenPremium(currentBusiness)
+                                    rewardedManager.showAd {
+                                        onNavigateToSignature()
+                                    }
                                 }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(44.dp), // 👈 Altura mais compacta
+                                .height(44.dp),
                             shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor) // 👈 Mesma cor roxa do OCR
+                            colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor)
                         ) {
                             Text(
-                                text = if (isPremium) "CONFIGURAR ASSINATURA" else "👑 DESBLOQUEAR ASSINATURA DIGITAL",
+                                text = if (isPremium) "CONFIGURAR ASSINATURA" else "📺 ASSISTIR ANÚNCIO PARA ASSINATURA",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
                                 color = Color.White

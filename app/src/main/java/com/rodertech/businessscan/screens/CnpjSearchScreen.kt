@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rodertech.businessscan.model.Business
 import com.rodertech.businessscan.util.PdfGenerator
+import com.rodertech.businessscan.util.RewardedAdManager
 import com.rodertech.businessscan.viewmodel.SearchUiState
 import com.rodertech.businessscan.viewmodel.SearchViewModel
 import com.rodertech.businessscan.data.UserPreferences
@@ -84,6 +85,13 @@ fun CnpjSearchScreen(
     val userPreferences = remember { UserPreferences(context) }
     val isPremium by userPreferences.isPremiumFlow.collectAsState(initial = false)
 
+    val rewardedManager = remember { RewardedAdManager(context) }
+    var isConsultUnlockedByAd by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        rewardedManager.loadAd()
+    }
+
     val uiState by searchViewModel.uiState.collectAsState()
     val cleanDigits = cnpjQuery.filter { it.isDigit() }
     val isCnpjValid = cleanDigits.length == 14
@@ -118,14 +126,20 @@ fun CnpjSearchScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onBack) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(cardBackgroundColor, RoundedCornerShape(12.dp))
+                        .clickable(onClick = onBack),
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Voltar",
                         tint = Color.White
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = "Consulta de CNPJ",
                     fontSize = 20.sp,
@@ -283,7 +297,17 @@ fun CnpjSearchScreen(
                                 )
                             }
 
-                            if (isPremium) {
+                            if (isPremium || isConsultUnlockedByAd) {
+                                if (!isPremium) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "✨ Consulta liberada por 1 uso via anúncio!",
+                                        color = Color(0xFF2ECC71),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
                                 HorizontalDivider(
                                     modifier = Modifier.padding(vertical = 12.dp),
                                     color = Color.Gray.copy(alpha = 0.3f)
@@ -369,18 +393,38 @@ fun CnpjSearchScreen(
                                 }
                             } else {
                                 Spacer(modifier = Modifier.height(12.dp))
-                                Button(
-                                    onClick = { onOpenPremium(business) },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFB800)),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Text(
-                                        text = "👑 SEJA PREMIUM PARA DADOS COMPLETOS",
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.Black,
-                                        fontSize = 12.sp
-                                    )
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Button(
+                                        onClick = {
+                                            rewardedManager.showAd {
+                                                isConsultUnlockedByAd = true
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00B894)),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text(
+                                            text = "📺 Assistir anúncio para liberar esta consulta",
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+
+                                    Button(
+                                        onClick = { onOpenPremium(business) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFB800)),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text(
+                                            text = "👑 SEJA PREMIUM ILIMITADO",
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.Black,
+                                            fontSize = 12.sp
+                                        )
+                                    }
                                 }
                             }
                         }

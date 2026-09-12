@@ -7,43 +7,6 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:198083510769:android:85a3ccb0f2b0743b574450",
-        "android_client_info": {
-          "package_name": "com.example.business_scan"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "198083510769-c4964h7sud10fmfllqmul0mv87lepv99.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.business_scan",
-            "certificate_hash": "cb7a82721bbed9695d4d1689b203d7b2b71d252d"
-          }
-        },
-        {
-          "client_id": "198083510769-287vessuvr02ggtmun2f02r2m5bnmunh.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDGmKbyRK__rJzs220pUFksrwRkyZSg4dc"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "198083510769-287vessuvr02ggtmun2f02r2m5bnmunh.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:198083510769:android:af2aeb25ad7e9e53574450",
         "android_client_info": {
           "package_name": "com.rodertech.businessscan"
@@ -51,11 +14,19 @@
       },
       "oauth_client": [
         {
-          "client_id": "198083510769-533k2va2psjgprdhj7qrpnc3qq9qum01.apps.googleusercontent.com",
+          "client_id": "198083510769-l1tjs82q1b0to33491ni9tn932p4d6lt.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.rodertech.businessscan",
-            "certificate_hash": "cb7a82721bbed9695d4d1689b203d7b2b71d252d"
+            "certificate_hash": "bb635d021b0133115ab7d355f0eadd59c133701d"
+          }
+        },
+        {
+          "client_id": "198083510769-tldq302bkpncvr2nqak88t71iat1qvmu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rodertech.businessscan",
+            "certificate_hash": "4e3ddbafae1c27e60c797c225e2b2f16861741dc"
           }
         },
         {

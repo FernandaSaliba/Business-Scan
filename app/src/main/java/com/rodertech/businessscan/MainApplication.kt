@@ -10,7 +10,7 @@ class MainApplication : Application() {
         super.onCreate()
         Purchases.logLevel = LogLevel.DEBUG
         Purchases.configure(
-            PurchasesConfiguration.Builder(this, "test_mnoItdkocNlRpMvpZzVwqDnDGeu")
+            PurchasesConfiguration.Builder(this, "goog_JgFehDvwQdSufLQtZawwqVOmKrU")
                 .build()
         )
     }
