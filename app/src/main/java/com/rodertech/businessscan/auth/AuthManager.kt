@@ -24,56 +24,56 @@ class AuthManager(private val context: Context) {
 
     private val credentialManager = CredentialManager.create(context)
 
-// --- LOGIN COM GOOGLE ---
+    // --- LOGIN COM GOOGLE ---
     suspend fun signInWithGoogle(
         webClientId: String = "",
         onSuccess: (FirebaseUser) -> Unit,
         onError: (String) -> Unit
     ) {
-    try {
-        val clientId = webClientId.ifEmpty {
-            runCatching { context.getString(R.string.default_web_client_id) }.getOrDefault("")
-        }
+        try {
+            val clientId = webClientId.ifEmpty {
+                runCatching { context.getString(R.string.default_web_client_id) }.getOrDefault("")
+            }
 
-        // Log de depuração para verificar se a Web Client ID está sendo carregada
-        Log.d("AuthManager", "Client ID utilizado: '$clientId'")
+            // Log de depuração para verificar se a Web Client ID está sendo carregada
+            Log.d("AuthManager", "Client ID utilizado: '$clientId'")
 
-        if (clientId.isEmpty()) {
-            onError("Web Client ID não configurado no google-services.json ou via parâmetro.")
-            return
-        }
+            if (clientId.isEmpty()) {
+                onError("Web Client ID não configurado no google-services.json ou via parâmetro.")
+                return
+            }
 
-        val googleIdOption = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false) // Permite selecionar qualquer conta do dispositivo
-            .setServerClientId(clientId)
-            .setAutoSelectEnabled(false)
-            .build()
+            val googleIdOption = GetGoogleIdOption.Builder()
+                .setFilterByAuthorizedAccounts(false) // Permite selecionar qualquer conta do dispositivo
+                .setServerClientId(clientId)
+                .setAutoSelectEnabled(false)
+                .build()
 
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
-            .build()
+            val request = GetCredentialRequest.Builder()
+                .addCredentialOption(googleIdOption)
+                .build()
 
-        val result = credentialManager.getCredential(request = request, context = context)
-        val credential = result.credential
+            val result = credentialManager.getCredential(request = request, context = context)
+            val credential = result.credential
 
-        if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-            val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-            val firebaseCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
+            if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                val firebaseCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
 
-            val authResult = auth.signInWithCredential(firebaseCredential).await()
-            authResult.user?.let(onSuccess) ?: onError("Falha ao obter usuário do Firebase.")
-        } else {
-            onError("Tipo de credencial inválido.")
-        }
+                val authResult = auth.signInWithCredential(firebaseCredential).await()
+                authResult.user?.let(onSuccess) ?: onError("Falha ao obter usuário do Firebase.")
+            } else {
+                onError("Tipo de credencial inválido.")
+            }
         } catch (e: GetCredentialCancellationException) {
-        // Usuário fechou a janela de login do Google
-        onError("Login cancelado pelo usuário.")
+            // Usuário fechou a janela de login do Google
+            onError("Login cancelado pelo usuário.")
         } catch (e: GetCredentialException) {
-        Log.e("AuthManager", "Erro no CredentialManager", e)
-        onError("Erro no Google: ${e.message} (Verifique a SHA-1 e a Web Client ID no Firebase)")
+            Log.e("AuthManager", "Erro no CredentialManager", e)
+            onError("Erro no Google: ${e.message} (Verifique a SHA-1 e a Web Client ID no Firebase)")
         } catch (e: Exception) {
-        Log.e("AuthManager", "Erro genérico no login", e)
-        onError(e.localizedMessage ?: "Erro na autenticação do Google.")
+            Log.e("AuthManager", "Erro genérico no login", e)
+            onError(e.localizedMessage ?: "Erro na autenticação do Google.")
         }
     }
 
@@ -89,5 +89,35 @@ class AuthManager(private val context: Context) {
 
     fun getCurrentUser(): FirebaseUser? = auth.currentUser
 
-}
 
+    // --- EXCLUSÃO DE CONTA ---
+    suspend fun deleteAccount(
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        try {
+            val user = auth.currentUser
+            if (user == null) {
+                onError("Nenhum usuário logado no momento.")
+                return
+            }
+
+            // Deleta o usuário diretamente do Firebase Auth
+            user.delete().await()
+
+            // Encerra a sessão local por segurança
+            auth.signOut()
+
+            onSuccess()
+        } catch (e: Exception) {
+            Log.e("AuthManager", "Erro ao excluir conta", e)
+            val message = if (e.message?.contains("recent-login") == true) {
+                "Por segurança, faça login novamente antes de excluir a conta."
+            } else {
+                e.localizedMessage ?: "Erro ao excluir a conta."
+            }
+            onError(message)
+        }
+    }
+
+}

@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import com.rodertech.businessscan.screens.CnpjSearchScreen
-
+import com.rodertech.businessscan.screens.SettingsScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -172,8 +172,25 @@ class MainActivity : ComponentActivity() {
                         },
                         onNavigateToCnpjSearch = {
                             currentScreen.value = "cnpj_search"
+                        },
+                        onNavigateToSettings = {
+                            currentScreen.value = "settings"
                         }
                     )
+
+                    "settings" -> SettingsScreen(
+                        onBackClick = { currentScreen.value = "search" },
+                        onAccountDeleted = {
+                            // Quando a conta for excluída com sucesso, limpa a sessão e manda pro login
+                            scope.launch {
+                                userPreferences.clearSession()
+                                isLoggedIn.value = false
+                                showSplash.value = true
+                                currentScreen.value = "search"
+                            }
+                        }
+                    )
+
                     "cnpj_search" -> CnpjSearchScreen(
                         onBack = { currentScreen.value = "search" },
                         onOpenPremium = { business ->

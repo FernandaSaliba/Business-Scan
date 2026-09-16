@@ -26,6 +26,8 @@ import com.rodertech.businessscan.viewmodel.SearchUiState
 import com.rodertech.businessscan.viewmodel.SearchViewModel
 import com.rodertech.businessscan.data.UserPreferences
 import com.rodertech.businessscan.util.RewardedAdManager
+import androidx.compose.material.icons.filled.Settings
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +36,7 @@ fun SearchScreen(
     onOpenPremium: (Business?) -> Unit = {},
     onNavigateToSignature: () -> Unit = {},
     onNavigateToCnpjSearch: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     searchViewModel: SearchViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -90,7 +93,7 @@ fun SearchScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "BusinessScan",
@@ -121,13 +124,34 @@ fun SearchScreen(
                         )
                     }
 
-                    Button(
-                        onClick = onLogout,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC3545)),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Sair", color = Color.White, fontWeight = FontWeight.Normal, fontSize = 13.sp)
+                        // Botão de Engrenagem (Configurações)
+                        IconButton(
+                            onClick = onNavigateToSettings,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(cardBackgroundColor, RoundedCornerShape(12.dp))
+                        ) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Default.Settings,
+                                contentDescription = "Configurações",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        // Botão Sair existente
+                        Button(
+                            onClick = onLogout,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC3545)),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text("Sair", color = Color.White, fontWeight = FontWeight.Normal, fontSize = 13.sp)
+                        }
                     }
                 }
 
