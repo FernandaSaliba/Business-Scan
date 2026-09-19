@@ -93,16 +93,30 @@ fun SearchScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    // Botão Sair à esquerda
+                    Button(
+                        onClick = onLogout,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC3545)),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text("Sair", color = Color.White, fontWeight = FontWeight.Normal, fontSize = 13.sp)
+                    }
+
+                    // Título centralizado
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "BusinessScan",
-                                fontSize = 24.sp,
+                                fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
                             if (isPremium) {
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Surface(
                                     color = goldColor.copy(alpha = 0.2f),
                                     shape = RoundedCornerShape(6.dp)
@@ -119,39 +133,24 @@ fun SearchScreen(
                         }
                         Text(
                             text = "Consulta e Inteligência Cadastral",
-                            fontSize = 12.sp,
+                            fontSize = 11.sp,
                             color = Color.LightGray
                         )
                     }
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    // Botão de Engrenagem (Configurações) à direita
+                    IconButton(
+                        onClick = onNavigateToSettings,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(cardBackgroundColor, RoundedCornerShape(12.dp))
                     ) {
-                        // Botão de Engrenagem (Configurações)
-                        IconButton(
-                            onClick = onNavigateToSettings,
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(cardBackgroundColor, RoundedCornerShape(12.dp))
-                        ) {
-                            Icon(
-                                imageVector = androidx.compose.material.icons.Icons.Default.Settings,
-                                contentDescription = "Configurações",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
-                        // Botão Sair existente
-                        Button(
-                            onClick = onLogout,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC3545)),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            Text("Sair", color = Color.White, fontWeight = FontWeight.Normal, fontSize = 13.sp)
-                        }
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Default.Settings,
+                            contentDescription = "Configurações",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
 
@@ -258,7 +257,7 @@ fun SearchScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor)
                         ) {
                             Text(
-                                text = if (isPremium) "SELECIONAR DOCUMENTO PARA OCR" else "📺 ASSISTIR ANÚNCIO PARA OCR",
+                                text = if (isPremium) "SELECIONAR DOCUMENTO PARA OCR" else "SEJA PREMIUM OU ASSISTA ANÚNCIO OCR",
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
                                 fontSize = 13.sp
@@ -359,7 +358,7 @@ fun SearchScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor)
                         ) {
                             Text(
-                                text = if (isPremium) "CONFIGURAR ASSINATURA" else "📺 ASSISTIR ANÚNCIO PARA ASSINATURA",
+                                text = if (isPremium) "CONFIGURAR ASSINATURA" else "SEJA PREMIUM OU ASSISTA ANÚNCIO ASSINATURA",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
                                 color = Color.White
@@ -433,7 +432,7 @@ fun SearchScreen(
                     ) {
                         Text(
                             text = "👑 SEJA PREMIUM AGORA",
-                             fontSize = 14.sp,
+                            fontSize = 14.sp,
                             color = Color.White
                         )
                     }

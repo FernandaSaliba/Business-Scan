@@ -181,13 +181,17 @@ class MainActivity : ComponentActivity() {
                     "settings" -> SettingsScreen(
                         onBackClick = { currentScreen.value = "search" },
                         onAccountDeleted = {
-                            // Quando a conta for excluída com sucesso, limpa a sessão e manda pro login
                             scope.launch {
                                 userPreferences.clearSession()
+                                FirebaseAuth.getInstance().signOut()
                                 isLoggedIn.value = false
                                 showSplash.value = true
                                 currentScreen.value = "search"
                             }
+                        },
+                        onOpenPremium = {
+                            selectedBusinessForPro.value = null
+                            currentScreen.value = "premium"
                         }
                     )
 
