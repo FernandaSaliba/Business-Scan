@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,7 +33,6 @@ private val cardBg = Color(0xFF1E293B)
 private val primaryText = Color.White
 private val accentColor = Color(0xFF818CF8)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OcrScreen(
     onNavigateBack: () -> Unit
@@ -92,29 +92,49 @@ fun OcrScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Digitalização Inteligente (OCR)", color = primaryText) },
-                navigationIcon = {
-                    TextButton(onClick = onNavigateBack) {
-                        Text("← Voltar", color = accentColor, fontWeight = FontWeight.Bold)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = darkBg)
-            )
-        },
-        containerColor = darkBg
-    ) { padding ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(darkBg)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
+                .background(darkBg)
+                .padding(20.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Botão de voltar padronizado igual ao PremiumScreen
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                IconButton(
+                    onClick = onNavigateBack,
+                    modifier = Modifier
+                        .size(42.dp)
+                        .background(cardBg, RoundedCornerShape(12.dp))
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Voltar",
+                        tint = primaryText
+                    )
+                }
+            }
+
+            Text(
+                text = "Digitalização Inteligente (OCR)",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = primaryText,
+                modifier = Modifier.align(Alignment.Start)
+            )
+
             // Botões de Ação (Câmara e Galeria)
             Row(
                 modifier = Modifier.fillMaxWidth(),

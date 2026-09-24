@@ -35,7 +35,6 @@ private val primaryText = Color.White
 private val accentColor = Color(0xFF818CF8)
 private val buttonGold = Color(0xFFD97706)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignatureCaptureScreen(
     onNavigateBack: () -> Unit,
@@ -67,120 +66,120 @@ fun SignatureCaptureScreen(
         }
     }
 
-    // Substituído o Surface por uma Box com fundo escuro para evitar qualquer ecrã branco
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(darkBg)
     ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Assinar Documento ✍️", color = primaryText, fontWeight = FontWeight.Bold) },
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Voltar",
-                                tint = primaryText
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = darkBg)
-                )
-            },
-            containerColor = Color.Transparent
-        ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(darkBg)
-                    .padding(padding)
-                    .padding(20.dp)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(darkBg)
+                .padding(20.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Botão de voltar padronizado igual ao PremiumScreen
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
             ) {
-                Text(
-                    text = "Selecione a origem da assinatura ou documento para capturar a imagem com alta nitidez.",
-                    fontSize = 14.sp,
-                    color = Color.LightGray
-                )
-
-                // Botões de Ação (Câmara e Galeria)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                IconButton(
+                    onClick = onNavigateBack,
+                    modifier = Modifier
+                        .size(42.dp)
+                        .background(cardBg, RoundedCornerShape(12.dp))
                 ) {
-                    Button(
-                        onClick = { cameraLauncher.launch(null) },
-                        modifier = Modifier.weight(1f).height(54.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = buttonGold)
-                    ) {
-                        Icon(imageVector = Icons.Default.CameraAlt, contentDescription = null, tint = Color.White)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "Tirar Foto", fontWeight = FontWeight.Bold, color = Color.White)
-                    }
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Voltar",
+                        tint = primaryText
+                    )
+                }
+            }
 
-                    OutlinedButton(
-                        onClick = { galleryLauncher.launch("image/*") },
-                        modifier = Modifier.weight(1f).height(54.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor),
-                        border = BorderStroke(1.dp, accentColor)
-                    ) {
-                        Icon(imageVector = Icons.Default.PhotoLibrary, contentDescription = null, tint = accentColor)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "Galeria", fontWeight = FontWeight.Bold, color = Color.White)
+            Text(
+                text = "Selecione a origem da assinatura ou documento para capturar a imagem com alta nitidez.",
+                fontSize = 14.sp,
+                color = Color.LightGray
+            )
+
+            // Botões de Ação (Câmara e Galeria)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = { cameraLauncher.launch(null) },
+                    modifier = Modifier.weight(1f).height(54.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = buttonGold)
+                ) {
+                    Icon(imageVector = Icons.Default.CameraAlt, contentDescription = null, tint = Color.White)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Tirar Foto", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+
+                OutlinedButton(
+                    onClick = { galleryLauncher.launch("image/*") },
+                    modifier = Modifier.weight(1f).height(54.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor),
+                    border = BorderStroke(1.dp, accentColor)
+                ) {
+                    Icon(imageVector = Icons.Default.PhotoLibrary, contentDescription = null, tint = accentColor)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Galeria", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
+
+            // Pré-visualização da Assinatura/Documento
+            val currentBitmap = capturedBitmap
+            if (currentBitmap != null) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(260.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = cardBg)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Image(
+                            bitmap = currentBitmap.asImageBitmap(),
+                            contentDescription = "Assinatura capturada",
+                            modifier = Modifier.fillMaxSize().padding(12.dp)
+                        )
                     }
                 }
 
-                // Pré-visualização da Assinatura/Documento
-                val currentBitmap = capturedBitmap
-                if (currentBitmap != null) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(260.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = cardBg)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Image(
-                                bitmap = currentBitmap.asImageBitmap(),
-                                contentDescription = "Assinatura capturada",
-                                modifier = Modifier.fillMaxSize().padding(12.dp)
-                            )
-                        }
-                    }
-
-                    // Botão de Confirmar Assinatura
-                    Button(
-                        onClick = { onSignatureReady(currentBitmap) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = accentColor)
-                    ) {
-                        Text(text = "CONFIRMAR ASSINATURA", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
-                    }
-                } else {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = cardBg)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text(
-                                text = "Nenhuma imagem selecionada.\nTire uma foto ou escolha da galeria.",
-                                color = Color.Gray,
-                                fontSize = 14.sp
-                            )
-                        }
+                // Botão de Confirmar Assinatura
+                Button(
+                    onClick = { onSignatureReady(currentBitmap) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = accentColor)
+                ) {
+                    Text(text = "CONFIRMAR ASSINATURA", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
+                }
+            } else {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = cardBg)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "Nenhuma imagem selecionada.\nTire uma foto ou escolha da galeria.",
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
                     }
                 }
             }

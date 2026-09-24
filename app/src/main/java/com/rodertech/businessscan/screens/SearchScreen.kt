@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,12 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rodertech.businessscan.model.Business
+import com.rodertech.businessscan.util.RewardedAdManager
+import com.rodertech.businessscan.data.UserPreferences
 import com.rodertech.businessscan.viewmodel.SearchUiState
 import com.rodertech.businessscan.viewmodel.SearchViewModel
-import com.rodertech.businessscan.data.UserPreferences
-import com.rodertech.businessscan.util.RewardedAdManager
-import androidx.compose.material.icons.filled.Settings
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,9 +37,13 @@ fun SearchScreen(
 ) {
     val context = LocalContext.current
     val userPreferences = remember { UserPreferences(context) }
+
+    // Leitura correta do fluxo ou estado premium do UserPreferences
     val isPremium by userPreferences.isPremiumFlow.collectAsState(initial = false)
 
     val rewardedManager = remember { RewardedAdManager(context) }
+
+    var showUnlockDialogFor by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         rewardedManager.loadAd()
@@ -54,7 +58,6 @@ fun SearchScreen(
     val premiumCardBg = Color(0xFF1E223D)
     val goldColor = Color(0xFFFFC107)
     val orangeButtonColor = Color(0xFFE67E22)
-
 
     Box(
         modifier = Modifier
@@ -76,7 +79,6 @@ fun SearchScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Botão Sair à esquerda
                     Button(
                         onClick = onLogout,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC3545)),
@@ -86,7 +88,6 @@ fun SearchScreen(
                         Text("Sair", color = Color.White, fontWeight = FontWeight.Normal, fontSize = 13.sp)
                     }
 
-                    // Título centralizado
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.weight(1f)
@@ -121,7 +122,6 @@ fun SearchScreen(
                         )
                     }
 
-                    // Botão de Engrenagem (Configurações) à direita
                     IconButton(
                         onClick = onNavigateToSettings,
                         modifier = Modifier
@@ -129,7 +129,7 @@ fun SearchScreen(
                             .background(cardBackgroundColor, RoundedCornerShape(12.dp))
                     ) {
                         Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Default.Settings,
+                            imageVector = Icons.Default.Settings,
                             contentDescription = "Configurações",
                             tint = Color.White,
                             modifier = Modifier.size(20.dp)
@@ -182,7 +182,6 @@ fun SearchScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Card de Digitalização / OCR Inteligente
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
@@ -230,9 +229,7 @@ fun SearchScreen(
                                 if (isPremium) {
                                     onNavigateToOcr()
                                 } else {
-                                    rewardedManager.showAd {
-                                        onNavigateToOcr()
-                                    }
+                                    showUnlockDialogFor = "OCR Inteligente"
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -240,7 +237,7 @@ fun SearchScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor)
                         ) {
                             Text(
-                                text = if (isPremium) "SELECIONAR DOCUMENTO PARA OCR" else "SEJA PREMIUM OU ASSISTA ANÚNCIO OCR",
+                                text = if (isPremium) "SELECIONAR DOCUMENTO PARA OCR" else "Reconhecimento Óptico de Caracteres",
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
                                 fontSize = 13.sp
@@ -281,7 +278,6 @@ fun SearchScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ✍Botão para assinatura digital
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
@@ -329,9 +325,7 @@ fun SearchScreen(
                                 if (isPremium) {
                                     onNavigateToSignature()
                                 } else {
-                                    rewardedManager.showAd {
-                                        onNavigateToSignature()
-                                    }
+                                    showUnlockDialogFor = "Assinatura Digital"
                                 }
                             },
                             modifier = Modifier
@@ -341,7 +335,7 @@ fun SearchScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor)
                         ) {
                             Text(
-                                text = if (isPremium) "CONFIGURAR ASSINATURA" else "SEJA PREMIUM OU ASSISTA ANÚNCIO ASSINATURA",
+                                text = if (isPremium) "CONFIGURAR ASSINATURA" else "Assinatura Digital",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
                                 color = Color.White
@@ -351,7 +345,6 @@ fun SearchScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -423,6 +416,26 @@ fun SearchScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
+        }
+
+        if (showUnlockDialogFor != null) {
+            UnlockDialog(
+                featureTitle = showUnlockDialogFor!!,
+                onDismiss = { showUnlockDialogFor = null },
+                onWatchAd = {
+                    val feature = showUnlockDialogFor
+                    rewardedManager.showAd {
+                        if (feature == "OCR Inteligente") {
+                            onNavigateToOcr()
+                        } else {
+                            onNavigateToSignature()
+                        }
+                    }
+                },
+                onGoPremium = {
+                    onOpenPremium(currentBusiness)
+                }
+            )
         }
     }
 }
