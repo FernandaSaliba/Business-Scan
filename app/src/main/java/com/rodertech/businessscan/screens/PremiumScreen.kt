@@ -22,11 +22,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.rodertech.businessscan.model.Business
 import com.rodertech.businessscan.util.BillingManager
 import com.rodertech.businessscan.data.UserPreferences
 import kotlinx.coroutines.launch
-import com.rodertech.businessscan.util.PdfGenerator
+import com.rodertech.businessscan.model.Business
 enum class PlanoType { MENSAL, ANUAL }
 
 
@@ -72,18 +71,6 @@ fun PremiumScreen(
             Text(text = "Desbloqueie o BusinessScan Pro 👑", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Spacer(modifier = Modifier.height(20.dp))
 
-            business?.let { emp ->
-                Surface(color = Color(0xFF1E293B), shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text(text = "Relatório para: ${emp.name}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF818CF8))
-                        if (emp.cnpj.isNotEmpty()) Text(text = "CNPJ: ${emp.cnpj}", fontSize = 11.sp, color = Color.Gray)
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(onClick = { PdfGenerator.generateBusinessReportPdf(context, emp) }, shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
-                    Text("📄 Baixar Relatório em PDF", color = Color.White)
-                }
-            }
 
             PlanOptionCard(title = "Plano Mensal", subtitle = "Cancele a qualquer momento", price = "R$ 29,90/mês", isSelected = planoSelecionado == PlanoType.MENSAL, onClick = { planoSelecionado = PlanoType.MENSAL })
             Spacer(modifier = Modifier.height(12.dp))

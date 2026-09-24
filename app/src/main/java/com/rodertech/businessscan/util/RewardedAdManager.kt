@@ -38,7 +38,7 @@ class RewardedAdManager(private val context: Context) {
     fun showAd(onRewardEarned: () -> Unit) {
         val activity = context as? Activity
         if (activity != null && rewardedAd != null) {
-            rewardedAd?.show(activity) { rewardItem ->
+            rewardedAd?.show(activity) { _ ->
                 // O usuário assistiu ao vídeo até o fim e ganhou a recompensa!
                 onRewardEarned()
                 // Recarrega o próximo anúncio para uso futuro

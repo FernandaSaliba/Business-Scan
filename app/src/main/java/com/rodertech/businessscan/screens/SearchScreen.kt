@@ -1,10 +1,5 @@
 package com.rodertech.businessscan.screens
 
-import android.graphics.ImageDecoder
-import android.os.Build
-import android.provider.MediaStore
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -37,6 +32,7 @@ fun SearchScreen(
     onNavigateToSignature: () -> Unit = {},
     onNavigateToCnpjSearch: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToOcr: () -> Unit = {},
     searchViewModel: SearchViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -59,19 +55,6 @@ fun SearchScreen(
     val goldColor = Color(0xFFFFC107)
     val orangeButtonColor = Color(0xFFE67E22)
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let {
-            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it))
-            } else {
-                @Suppress("DEPRECATION")
-                MediaStore.Images.Media.getBitmap(context.contentResolver, it)
-            }
-            searchViewModel.processarOcr(bitmap)
-        }
-    }
 
     Box(
         modifier = Modifier
@@ -245,10 +228,10 @@ fun SearchScreen(
                         Button(
                             onClick = {
                                 if (isPremium) {
-                                    imagePickerLauncher.launch("image/*")
+                                    onNavigateToOcr()
                                 } else {
                                     rewardedManager.showAd {
-                                        imagePickerLauncher.launch("image/*")
+                                        onNavigateToOcr()
                                     }
                                 }
                             },

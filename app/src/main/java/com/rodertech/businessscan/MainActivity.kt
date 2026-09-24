@@ -13,7 +13,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import com.rodertech.businessscan.data.UserPreferences
 import com.rodertech.businessscan.model.Business
-import com.rodertech.businessscan.screens.DocumentCaptureScreen
 import com.rodertech.businessscan.screens.HomeScreen
 import com.rodertech.businessscan.screens.LoginScreen
 import com.rodertech.businessscan.screens.OcrScreen
@@ -39,7 +38,7 @@ class MainActivity : ComponentActivity() {
         com.google.android.gms.ads.MobileAds.initialize(this) {}
 
         val userPreferences = UserPreferences(applicationContext)
-        val googleWebClientId = "198083510769-287vessuvr02ggtmun2f02r2m5bnmunh.apps.googleusercontent.com"
+        val googleWebClientId = "558379015018-2um9ndso96s59ne82rf8ldd4n832d4n3.apps.googleusercontent.com"
 
         setContent {
             val context = LocalContext.current
@@ -80,17 +79,15 @@ class MainActivity : ComponentActivity() {
             } else {
                 when (currentScreen.value) {
                     "home" -> HomeScreen()
-                    "signature" -> SignatureCaptureScreen(
-                        onNavigateBack = { currentScreen.value = "search" }
-                    )
-                    "document_capture" -> DocumentCaptureScreen(
-                        onDocumentCaptured = { docBitmap, sigBitmap ->
-                            documentToSignBitmap.value = docBitmap
-                            signatureBitmapToUse.value = sigBitmap
-                            currentScreen.value = "signature_placement"
-                        },
-                        onNavigateToCaptureSignature = {
-                            currentScreen.value = "signature"
+                    "document_capture" -> SignatureCaptureScreen(
+                        onNavigateBack = { currentScreen.value = "search" },
+                        onSignatureReady = { bitmap ->
+                            signatureBitmapToUse.value = bitmap
+                            if (documentToSignBitmap.value != null) {
+                                currentScreen.value = "signature_placement"
+                            } else {
+                                currentScreen.value = "document_capture"
+                            }
                         }
                     )
                     "signature_placement" -> {
@@ -170,6 +167,9 @@ class MainActivity : ComponentActivity() {
                             // Agora aponta para iniciar o fluxo completo de escanear o documento a ser assinado
                             currentScreen.value = "document_capture"
                         },
+                        onNavigateToOcr = {
+                            currentScreen.value = "ocr"
+                        },
                         onNavigateToCnpjSearch = {
                             currentScreen.value = "cnpj_search"
                         },
@@ -177,7 +177,6 @@ class MainActivity : ComponentActivity() {
                             currentScreen.value = "settings"
                         }
                     )
-
                     "settings" -> SettingsScreen(
                         onBackClick = { currentScreen.value = "search" },
                         onAccountDeleted = {

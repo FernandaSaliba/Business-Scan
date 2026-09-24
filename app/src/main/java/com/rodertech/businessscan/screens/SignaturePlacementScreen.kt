@@ -16,6 +16,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
+import androidx.compose.ui.layout.ContentScale
 
 @Composable
 fun SignaturePlacementScreen(
@@ -38,6 +39,7 @@ fun SignaturePlacementScreen(
         Image(
             bitmap = documentBitmap.asImageBitmap(),
             contentDescription = "Documento Escaneado",
+            contentScale = ContentScale.Fit, // <-- Mantém a proporção correta do documento
             modifier = Modifier
                 .fillMaxSize()
                 .onSizeChanged { size ->
