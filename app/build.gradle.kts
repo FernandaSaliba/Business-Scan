@@ -1,23 +1,21 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.gms.google-services")
-    id("com.google.devtools.ksp") version "2.3.0"
-
+    alias(libs.plugins.google.services)
+    id("com.google.devtools.ksp") version "2.3.10"
 }
 
 android {
     namespace = "com.rodertech.business_scan"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.rodertech.businessscan"
         minSdk = 24
         targetSdk = 34
 
-        versionCode = 6
-        versionName = "1.5"
+        versionCode = 7
+        versionName = "1.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -50,13 +48,11 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 }
 
 dependencies {
-    // Import do Firebase BoM (Versao atualizada)
-    implementation(platform("com.google.firebase:firebase-bom:34.18.0"))
-
-    // Dependencias de produtos do Firebase
+    // Firebase BoM e Produtos
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
     implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-firestore")
 
     // AndroidX e Jetpack Compose (BOM)
     implementation(libs.androidx.core.ktx)
@@ -69,46 +65,43 @@ dependencies {
     implementation(libs.androidx.compose.material3)
 
     // Navegacao, ViewModel e Icones para Compose
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-    implementation("androidx.navigation:navigation-compose:2.9.8")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.navigation.compose)
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
 
-    // Credentials Manager & Autenticacao Google
+    // Autenticacao Google e Credenciais
     implementation("androidx.credentials:credentials:1.6.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
+    implementation(libs.googleid)
 
-
-    // Comunicacao de Rede e Persistencia Local
+    // Rede e Persistencia Local
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
     implementation("com.squareup.retrofit2:converter-gson:3.0.0")
     implementation("androidx.datastore:datastore-preferences:1.2.1")
 
     // RevenueCat Purchases SDK
-    implementation("com.revenuecat.purchases:purchases:10.17.0")
-    implementation("com.revenuecat.purchases:purchases-ui:10.17.0")
-
+    implementation(libs.revenuecat.purchases)
+    implementation(libs.revenuecat.purchases.ui)
 
     // Testes
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    // Google Play Billing Library com suporte a KTX
+    // Google Play Billing
     implementation("com.android.billingclient:billing-ktx:9.1.0")
 
     // Google ML Kit Text Recognition
     implementation("com.google.mlkit:text-recognition:16.0.1")
 
     // Room components
-    implementation("androidx.room:room-runtime:2.8.4")
-    implementation("androidx.room:room-ktx:2.8.4")
-    ksp("androidx.room:room-compiler:2.8.4")
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     // Anúncios
-    implementation("com.google.android.gms:play-services-ads:23.0.0")
+    implementation(libs.play.services.ads)
 }

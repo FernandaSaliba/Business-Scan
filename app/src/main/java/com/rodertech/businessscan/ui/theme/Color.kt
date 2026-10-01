@@ -1,4 +1,4 @@
-package com.rodertech.businessscan.theme
+package com.rodertech.businessscan.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -1,7 +1,11 @@
 package com.rodertech.businessscan.screens
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,6 +16,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -79,11 +85,18 @@ fun SearchScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Botão Sair com efeito de escala ao tocar
+                    val logoutInteraction = remember { MutableInteractionSource() }
+                    val isLogoutPressed by logoutInteraction.collectIsPressedAsState()
+                    val logoutScale by animateFloatAsState(targetValue = if (isLogoutPressed) 0.94f else 1f, label = "logoutScale")
+
                     Button(
                         onClick = onLogout,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC3545)),
                         shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.scale(logoutScale),
+                        interactionSource = logoutInteraction
                     ) {
                         Text("Sair", color = Color.White, fontWeight = FontWeight.Normal, fontSize = 13.sp)
                     }
@@ -122,11 +135,23 @@ fun SearchScreen(
                         )
                     }
 
-                    IconButton(
-                        onClick = onNavigateToSettings,
+                    // Botão de Configurações com efeito de escala ao tocar
+                    val settingsInteraction = remember { MutableInteractionSource() }
+                    val isSettingsPressed by settingsInteraction.collectIsPressedAsState()
+                    val settingsScale by animateFloatAsState(targetValue = if (isSettingsPressed) 0.92f else 1f, label = "settingsScale")
+
+                    Box(
                         modifier = Modifier
                             .size(40.dp)
+                            .scale(settingsScale)
                             .background(cardBackgroundColor, RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable(
+                                interactionSource = settingsInteraction,
+                                indication = null,
+                                onClick = onNavigateToSettings
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
@@ -162,13 +187,20 @@ fun SearchScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        // Botão Acessar Consulta de CNPJ com efeito de escala
+                        val cnpjInteraction = remember { MutableInteractionSource() }
+                        val isCnpjPressed by cnpjInteraction.collectIsPressedAsState()
+                        val cnpjScale by animateFloatAsState(targetValue = if (isCnpjPressed) 0.96f else 1f, label = "cnpjScale")
+
                         Button(
                             onClick = onNavigateToCnpjSearch,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(50.dp),
+                                .height(50.dp)
+                                .scale(cnpjScale),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor)
+                            colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor),
+                            interactionSource = cnpjInteraction
                         ) {
                             Text(
                                 text = "ACESSAR CONSULTA DE CNPJ",
@@ -224,6 +256,11 @@ fun SearchScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
+                        // Botão OCR com efeito de escala
+                        val ocrInteraction = remember { MutableInteractionSource() }
+                        val isOcrPressed by ocrInteraction.collectIsPressedAsState()
+                        val ocrScale by animateFloatAsState(targetValue = if (isOcrPressed) 0.96f else 1f, label = "ocrScale")
+
                         Button(
                             onClick = {
                                 if (isPremium) {
@@ -232,9 +269,12 @@ fun SearchScreen(
                                     showUnlockDialogFor = "OCR Inteligente"
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .scale(ocrScale),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor)
+                            colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor),
+                            interactionSource = ocrInteraction
                         ) {
                             Text(
                                 text = if (isPremium) "SELECIONAR DOCUMENTO PARA OCR" else "Reconhecimento Óptico de Caracteres",
@@ -320,6 +360,11 @@ fun SearchScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
+                        // Botão Assinatura Digital com efeito de escala
+                        val signInteraction = remember { MutableInteractionSource() }
+                        val isSignPressed by signInteraction.collectIsPressedAsState()
+                        val signScale by animateFloatAsState(targetValue = if (isSignPressed) 0.96f else 1f, label = "signScale")
+
                         Button(
                             onClick = {
                                 if (isPremium) {
@@ -330,9 +375,11 @@ fun SearchScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(44.dp),
+                                .height(44.dp)
+                                .scale(signScale),
                             shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor)
+                            colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor),
+                            interactionSource = signInteraction
                         ) {
                             Text(
                                 text = if (isPremium) "CONFIGURAR ASSINATURA" else "Assinatura Digital",
@@ -398,13 +445,20 @@ fun SearchScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Botão Seja Premium com efeito de escala
+                    val premiumInteraction = remember { MutableInteractionSource() }
+                    val isPremiumPressed by premiumInteraction.collectIsPressedAsState()
+                    val premiumScale by animateFloatAsState(targetValue = if (isPremiumPressed) 0.96f else 1f, label = "premiumScale")
+
                     Button(
                         onClick = { onOpenPremium(currentBusiness) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(46.dp),
+                            .height(46.dp)
+                            .scale(premiumScale),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = orangeButtonColor)
+                        colors = ButtonDefaults.buttonColors(containerColor = orangeButtonColor),
+                        interactionSource = premiumInteraction
                     ) {
                         Text(
                             text = "👑 SEJA PREMIUM AGORA",
@@ -422,14 +476,15 @@ fun SearchScreen(
             UnlockDialog(
                 featureTitle = showUnlockDialogFor!!,
                 onDismiss = { showUnlockDialogFor = null },
-                onWatchAd = {
-                    val feature = showUnlockDialogFor
+                onWatchAd = { },
+                onWatchAdForOcr = {
                     rewardedManager.showAd {
-                        if (feature == "OCR Inteligente") {
-                            onNavigateToOcr()
-                        } else {
-                            onNavigateToSignature()
-                        }
+                        onNavigateToOcr()
+                    }
+                },
+                onWatchAdForSignature = {
+                    rewardedManager.showAd {
+                        onNavigateToSignature()
                     }
                 },
                 onGoPremium = {

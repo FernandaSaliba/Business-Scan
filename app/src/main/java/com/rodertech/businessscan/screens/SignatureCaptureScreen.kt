@@ -7,9 +7,13 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +26,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -82,16 +88,27 @@ fun SignatureCaptureScreen(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Botão de voltar padronizado igual ao PremiumScreen
+            // Botão de voltar padronizado com efeito de toque
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Start
             ) {
-                IconButton(
-                    onClick = onNavigateBack,
+                val backInteractionSource = remember { MutableInteractionSource() }
+                val isBackPressed by backInteractionSource.collectIsPressedAsState()
+                val backScale by animateFloatAsState(targetValue = if (isBackPressed) 0.92f else 1f, label = "backScale")
+
+                Box(
                     modifier = Modifier
                         .size(42.dp)
+                        .scale(backScale)
                         .background(cardBg, RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(
+                            interactionSource = backInteractionSource,
+                            indication = null,
+                            onClick = onNavigateBack
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -107,28 +124,44 @@ fun SignatureCaptureScreen(
                 color = Color.LightGray
             )
 
-            // Botões de Ação (Câmara e Galeria)
+            // Botões de Ação (Câmara e Galeria) com efeito de toque
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                val camInteractionSource = remember { MutableInteractionSource() }
+                val isCamPressed by camInteractionSource.collectIsPressedAsState()
+                val camScale by animateFloatAsState(targetValue = if (isCamPressed) 0.96f else 1f, label = "camScale")
+
                 Button(
                     onClick = { cameraLauncher.launch(null) },
-                    modifier = Modifier.weight(1f).height(54.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(54.dp)
+                        .scale(camScale),
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = buttonGold)
+                    colors = ButtonDefaults.buttonColors(containerColor = buttonGold),
+                    interactionSource = camInteractionSource
                 ) {
                     Icon(imageVector = Icons.Default.CameraAlt, contentDescription = null, tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(text = "Tirar Foto", fontWeight = FontWeight.Bold, color = Color.White)
                 }
 
+                val galInteractionSource = remember { MutableInteractionSource() }
+                val isGalPressed by galInteractionSource.collectIsPressedAsState()
+                val galScale by animateFloatAsState(targetValue = if (isGalPressed) 0.96f else 1f, label = "galScale")
+
                 OutlinedButton(
                     onClick = { galleryLauncher.launch("image/*") },
-                    modifier = Modifier.weight(1f).height(54.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(54.dp)
+                        .scale(galScale),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor),
-                    border = BorderStroke(1.dp, accentColor)
+                    border = BorderStroke(1.dp, accentColor),
+                    interactionSource = galInteractionSource
                 ) {
                     Icon(imageVector = Icons.Default.PhotoLibrary, contentDescription = null, tint = accentColor)
                     Spacer(modifier = Modifier.width(8.dp))
@@ -155,14 +188,20 @@ fun SignatureCaptureScreen(
                     }
                 }
 
-                // Botão de Confirmar Assinatura
+                // Botão de Confirmar Assinatura com efeito de toque
+                val confInteractionSource = remember { MutableInteractionSource() }
+                val isConfPressed by confInteractionSource.collectIsPressedAsState()
+                val confScale by animateFloatAsState(targetValue = if (isConfPressed) 0.96f else 1f, label = "confScale")
+
                 Button(
                     onClick = { onSignatureReady(currentBitmap) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
+                        .height(54.dp)
+                        .scale(confScale),
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = accentColor)
+                    colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+                    interactionSource = confInteractionSource
                 ) {
                     Text(text = "CONFIRMAR ASSINATURA", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
                 }

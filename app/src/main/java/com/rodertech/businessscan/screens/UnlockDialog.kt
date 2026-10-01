@@ -27,7 +27,9 @@ private val buttonGold = Color(0xFFD97706)
 fun UnlockDialog(
     featureTitle: String,
     onDismiss: () -> Unit,
-    onWatchAd: () -> Unit,
+    onWatchAd: () -> Unit, // Mantido por compatibilidade
+    onWatchAdForOcr: (() -> Unit)? = null,       // NOVO
+    onWatchAdForSignature: (() -> Unit)? = null, // NOVO
     onGoPremium: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -45,7 +47,6 @@ fun UnlockDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Ícone de Cadeado/Bloqueio Estilizado
                 Box(
                     modifier = Modifier
                         .size(56.dp)
@@ -77,11 +78,17 @@ fun UnlockDialog(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Botão para Assistir Anúncio
                 Button(
                     onClick = {
                         onDismiss()
-                        onWatchAd()
+                        // Executa estritamente o callback correspondente
+                        if (onWatchAdForOcr != null && featureTitle.contains("OCR", ignoreCase = true)) {
+                            onWatchAdForOcr()
+                        } else if (onWatchAdForSignature != null && featureTitle.contains("Assinatura", ignoreCase = true)) {
+                            onWatchAdForSignature()
+                        } else {
+                            onWatchAd()
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -103,7 +110,6 @@ fun UnlockDialog(
                     )
                 }
 
-                // Botão para Ser Premium
                 OutlinedButton(
                     onClick = {
                         onDismiss()
@@ -137,4 +143,3 @@ fun UnlockDialog(
         }
     }
 }
-

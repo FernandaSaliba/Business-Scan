@@ -3,6 +3,10 @@ package com.rodertech.businessscan.screens
 import android.content.Intent
 import androidx.core.net.toUri
 import android.widget.Toast
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +22,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -35,7 +41,7 @@ import androidx.compose.foundation.background
 fun SettingsScreen(
     onBackClick: () -> Unit,
     onAccountDeleted: () -> Unit,
-    onOpenPremium: () -> Unit = {} // <--- Callback para abrir a tela de compra caso seja Free
+    onOpenPremium: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -61,12 +67,23 @@ fun SettingsScreen(
                     .padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Botão de voltar estilizado
-                IconButton(
-                    onClick = onBackClick,
+                // Botão de voltar com efeito de escala ao tocar
+                val backInteraction = remember { MutableInteractionSource() }
+                val isBackPressed by backInteraction.collectIsPressedAsState()
+                val backScale by animateFloatAsState(targetValue = if (isBackPressed) 0.92f else 1f, label = "backScale")
+
+                Box(
                     modifier = Modifier
                         .size(40.dp)
+                        .scale(backScale)
                         .background(cardBackgroundColor, RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(
+                            interactionSource = backInteraction,
+                            indication = null,
+                            onClick = onBackClick
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -76,7 +93,7 @@ fun SettingsScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.width(16.dp)) // Espaçamento idêntico ao da tela de CNPJ
+                Spacer(modifier = Modifier.width(16.dp))
 
                 Text(
                     text = "Configurações",
@@ -175,11 +192,14 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Botão dinâmico dependendo se é Premium ou Free
+                    // Botão dinâmico com efeito de escala ao tocar
+                    val subInteraction = remember { MutableInteractionSource() }
+                    val isSubPressed by subInteraction.collectIsPressedAsState()
+                    val subScale by animateFloatAsState(targetValue = if (isSubPressed) 0.96f else 1f, label = "subScale")
+
                     if (isPremium) {
                         OutlinedButton(
                             onClick = {
-                                // Redireciona o usuário para gerenciar a assinatura na Play Store (padrão recomendado pelo Google)
                                 val intent = Intent(Intent.ACTION_VIEW, "https://play.google.com/store/account/subscriptions".toUri())
                                 try {
                                     context.startActivity(intent)
@@ -187,19 +207,25 @@ fun SettingsScreen(
                                     Toast.makeText(context, "Não foi possível abrir a Google Play.", Toast.LENGTH_SHORT).show()
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .scale(subScale),
                             shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.Red.copy(alpha = 0.5f))
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.Red.copy(alpha = 0.5f)),
+                            interactionSource = subInteraction
                         ) {
                             Text("Cancelar ou Gerenciar Assinatura", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     } else {
                         Button(
                             onClick = onOpenPremium,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .scale(subScale),
                             shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = orangeButtonColor)
+                            colors = ButtonDefaults.buttonColors(containerColor = orangeButtonColor),
+                            interactionSource = subInteraction
                         ) {
                             Text("👑 ASSINAR O PLANO PREMIUM", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
@@ -256,14 +282,20 @@ fun SettingsScreen(
                 color = Color(0xFFE74C3C)
             )
 
+            val deleteInteraction = remember { MutableInteractionSource() }
+            val isDeletePressed by deleteInteraction.collectIsPressedAsState()
+            val deleteScale by animateFloatAsState(targetValue = if (isDeletePressed) 0.96f else 1f, label = "deleteScale")
+
             OutlinedButton(
                 onClick = { showDeleteDialog = true },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(50.dp)
+                    .scale(deleteScale),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFE74C3C)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE74C3C).copy(alpha = 0.5f))
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE74C3C).copy(alpha = 0.5f)),
+                interactionSource = deleteInteraction
             ) {
                 Icon(imageVector = Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
@@ -291,6 +323,10 @@ fun SettingsScreen(
             title = { Text("Excluir Conta", fontWeight = FontWeight.Bold) },
             text = { Text("Tem certeza absoluta que deseja excluir sua conta permanentemente? Todos os dados associados serão apagados e esta ação não poderá ser desfeita.") },
             confirmButton = {
+                val confirmInteraction = remember { MutableInteractionSource() }
+                val isConfirmPressed by confirmInteraction.collectIsPressedAsState()
+                val confirmScale by animateFloatAsState(targetValue = if (isConfirmPressed) 0.92f else 1f, label = "confirmScale")
+
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
@@ -305,13 +341,23 @@ fun SettingsScreen(
                                 }
                             )
                         }
-                    }
+                    },
+                    modifier = Modifier.scale(confirmScale),
+                    interactionSource = confirmInteraction
                 ) {
                     Text("Sim, Excluir", color = Color(0xFFE74C3C), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
+                val dismissInteraction = remember { MutableInteractionSource() }
+                val isDismissPressed by dismissInteraction.collectIsPressedAsState()
+                val dismissScale by animateFloatAsState(targetValue = if (isDismissPressed) 0.92f else 1f, label = "dismissScale")
+
+                TextButton(
+                    onClick = { showDeleteDialog = false },
+                    modifier = Modifier.scale(dismissScale),
+                    interactionSource = dismissInteraction
+                ) {
                     Text("Cancelar", color = Color.White)
                 }
             },
@@ -331,11 +377,18 @@ fun SettingsItemCard(
     cardBackgroundColor: Color,
     onClick: () -> Unit
 ) {
+    val cardInteraction = remember { MutableInteractionSource() }
+    val isCardPressed by cardInteraction.collectIsPressedAsState()
+    val cardScale by animateFloatAsState(targetValue = if (isCardPressed) 0.97f else 1f, label = "cardScale")
+
     Card(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(cardScale),
+        interactionSource = cardInteraction
     ) {
         Row(
             modifier = Modifier

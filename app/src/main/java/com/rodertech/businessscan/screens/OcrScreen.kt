@@ -7,8 +7,12 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +24,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -27,11 +33,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rodertech.businessscan.util.OcrHelper
+import androidx.compose.foundation.BorderStroke
 
 private val darkBg = Color(0xFF0F172A)
 private val cardBg = Color(0xFF1E293B)
 private val primaryText = Color.White
 private val accentColor = Color(0xFF818CF8)
+private val buttonGold = Color(0xFFD97706)
 
 @Composable
 fun OcrScreen(
@@ -42,7 +50,7 @@ fun OcrScreen(
 
     var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var extractedText by remember { mutableStateOf("Nenhum texto extraído ainda. Tire a foto ou escolha um documento da galeria.") }
-    var searchQuery by remember { mutableStateOf("") } // Variável para a barra de pesquisa no texto
+    var searchQuery by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -108,16 +116,27 @@ fun OcrScreen(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Botão de voltar padronizado igual ao PremiumScreen
+            // Botão de voltar com efeito de toque
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Start
             ) {
-                IconButton(
-                    onClick = onNavigateBack,
+                val backInteractionSource = remember { MutableInteractionSource() }
+                val isBackPressed by backInteractionSource.collectIsPressedAsState()
+                val backScale by animateFloatAsState(targetValue = if (isBackPressed) 0.92f else 1f, label = "backScale")
+
+                Box(
                     modifier = Modifier
                         .size(42.dp)
+                        .scale(backScale)
                         .background(cardBg, RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(
+                            interactionSource = backInteractionSource,
+                            indication = null,
+                            onClick = onNavigateBack
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -135,31 +154,47 @@ fun OcrScreen(
                 modifier = Modifier.align(Alignment.Start)
             )
 
-            // Botões de Ação (Câmara e Galeria)
+            // Botões de Ação (Tirar Foto e Galeria) com efeito de toque
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                val camInteractionSource = remember { MutableInteractionSource() }
+                val isCamPressed by camInteractionSource.collectIsPressedAsState()
+                val camScale by animateFloatAsState(targetValue = if (isCamPressed) 0.96f else 1f, label = "camScale")
+
                 Button(
                     onClick = { cameraLauncher.launch(null) },
-                    modifier = Modifier.weight(1f).height(50.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp)
+                        .scale(camScale),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = accentColor)
+                    colors = ButtonDefaults.buttonColors(containerColor = buttonGold),
+                    interactionSource = camInteractionSource
                 ) {
                     Text(text = "📷 Tirar Foto", fontWeight = FontWeight.Bold, color = Color.White)
                 }
 
+                val galInteractionSource = remember { MutableInteractionSource() }
+                val isGalPressed by galInteractionSource.collectIsPressedAsState()
+                val galScale by animateFloatAsState(targetValue = if (isGalPressed) 0.96f else 1f, label = "galScale")
+
                 OutlinedButton(
                     onClick = { galleryLauncher.launch("image/*") },
-                    modifier = Modifier.weight(1f).height(50.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp)
+                        .scale(galScale),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor)
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor),
+                    border = BorderStroke(1.dp, accentColor),
+                    interactionSource = galInteractionSource
                 ) {
-                    Text(text = "🖼️ Galeria", fontWeight = FontWeight.Bold)
+                    Text(text = "🖼️ Galeria", fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
 
-            // Pré-visualização da Imagem Capturada
             val currentBitmap = capturedBitmap
             if (currentBitmap != null) {
                 Card(
@@ -177,7 +212,6 @@ fun OcrScreen(
                 }
             }
 
-            // Secção de Resultado do OCR e Pesquisa
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -198,7 +232,6 @@ fun OcrScreen(
                             modifier = Modifier.align(Alignment.CenterHorizontally).padding(20.dp)
                         )
                     } else {
-                        // Barra de Pesquisa Específica para Encontrar Partes no Texto
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
@@ -218,7 +251,6 @@ fun OcrScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Caixa de Exibição do Texto (Filtra se houver termo pesquisado)
                         val displayedText = if (searchQuery.isBlank()) {
                             extractedText
                         } else {

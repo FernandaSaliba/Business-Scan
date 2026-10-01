@@ -1,4 +1,4 @@
-package com.rodertech.businessscan.theme
+package com.rodertech.businessscan.ui.theme
 
 import android.app.Activity
 import android.os.Build
