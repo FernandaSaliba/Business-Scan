@@ -27,47 +27,66 @@ fun SignaturePlacementScreen(
     var offsetX by remember { mutableFloatStateOf(100f) }
     var offsetY by remember { mutableFloatStateOf(100f) }
 
-    var boxWidth by remember { mutableFloatStateOf(1f) }
-    var boxHeight by remember { mutableFloatStateOf(1f) }
+    var displayedWidth by remember { mutableFloatStateOf(1f) }
+    var displayedHeight by remember { mutableFloatStateOf(1f) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.DarkGray)
+            .background(Color.DarkGray),
+        contentAlignment = Alignment.Center
     ) {
-        // 1. Exibe o documento escaneado ao fundo
-        Image(
-            bitmap = documentBitmap.asImageBitmap(),
-            contentDescription = "Documento Escaneado",
-            contentScale = ContentScale.Fit, // <-- Mantém a proporção correta do documento
+        // 1. Exibe o documento escaneado ao fundo com cálculo correto das dimensões visíveis
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .onSizeChanged { size ->
-                    boxWidth = size.width.toFloat()
-                    boxHeight = size.height.toFloat()
-                }
-        )
+                .onSizeChanged { containerSize ->
+                    val containerW = containerSize.width.toFloat()
+                    val containerH = containerSize.height.toFloat()
 
-        // 2. Exibe a assinatura arrastável
-        Image(
-            bitmap = signatureBitmap.asImageBitmap(),
-            contentDescription = "Assinatura Arrastável",
-            modifier = Modifier
-                .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
-                .size(160.dp, 80.dp)
-                .pointerInput(Unit) {
-                    detectDragGestures { change, dragAmount ->
-                        change.consume()
-                        offsetX += dragAmount.x
-                        offsetY += dragAmount.y
+                    val bitmapW = documentBitmap.width.toFloat()
+                    val bitmapH = documentBitmap.height.toFloat()
+
+                    val containerRatio = containerW / containerH
+                    val bitmapRatio = bitmapW / bitmapH
+
+                    if (containerRatio > bitmapRatio) {
+                        displayedHeight = containerH
+                        displayedWidth = containerH * bitmapRatio
+                    } else {
+                        displayedWidth = containerW
+                        displayedHeight = containerW / bitmapRatio
                     }
                 }
-        )
+        ) {
+            Image(
+                bitmap = documentBitmap.asImageBitmap(),
+                contentDescription = "Documento Escaneado",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            // 2. Exibe a assinatura arrastável posicionada sobre o documento
+            Image(
+                bitmap = signatureBitmap.asImageBitmap(),
+                contentDescription = "Assinatura Arrastável",
+                modifier = Modifier
+                    .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
+                    .size(160.dp, 80.dp)
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            offsetX += dragAmount.x
+                            offsetY += dragAmount.y
+                        }
+                    }
+            )
+        }
 
         // 3. Botão de confirmação
         Button(
             onClick = {
-                onConfirmPosition(offsetX, offsetY, boxWidth, boxHeight)
+                onConfirmPosition(offsetX, offsetY, displayedWidth, displayedHeight)
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)

@@ -1,14 +1,12 @@
 package com.rodertech.businessscan.screens
 
 import android.graphics.Bitmap
-import android.graphics.ImageDecoder
+import android.graphics.BitmapFactory
 import android.net.Uri
-import android.os.Build
-import android.provider.MediaStore
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,8 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,76 +32,72 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val darkBg = Color(0xFF0F172A)
-private val cardBg = Color(0xFF1E293B)
-private val primaryText = Color.White
-private val accentColor = Color(0xFF818CF8)
-private val buttonGold = Color(0xFFD97706)
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignatureCaptureScreen(
     onNavigateBack: () -> Unit,
-    onSignatureReady: (Bitmap) -> Unit
+    onProceedToPlacement: (Bitmap, Bitmap) -> Unit // <--- Alterado para receber assinatura e documento juntos
 ) {
     val context = LocalContext.current
-    var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    var signatureBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var documentUri by remember { mutableStateOf<Uri?>(null) }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap ->
+    ) { bitmap: Bitmap? ->
         if (bitmap != null) {
-            capturedBitmap = bitmap
+            signatureBitmap = bitmap
+            Toast.makeText(context, "Assinatura capturada com sucesso!", Toast.LENGTH_SHORT).show()
         }
     }
 
-    val galleryLauncher = rememberLauncherForActivityResult(
+    // Launcher para escolher o documento base na galeria
+    val documentGalleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                val source = ImageDecoder.createSource(context.contentResolver, it)
-                ImageDecoder.decodeBitmap(source)
-            } else {
-                @Suppress("DEPRECATION")
-                MediaStore.Images.Media.getBitmap(context.contentResolver, it)
-            }
-            capturedBitmap = bitmap
+    ) { uri ->
+        if (uri != null) {
+            documentUri = uri
+            Toast.makeText(context, "Documento selecionado!", Toast.LENGTH_SHORT).show()
         }
     }
+
+    val backgroundColor = Color(0xFF1B1F38)
+    val cardBackgroundColor = Color(0xFF282D4F)
+    val buttonPurpleColor = Color(0xFF6C5CE7)
+    val goldColor = Color(0xFFFFC107)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(darkBg)
+            .background(backgroundColor)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(darkBg)
                 .padding(20.dp)
                 .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Botão de voltar padronizado com efeito de toque
+            // Cabeçalho com botão de voltar
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                val backInteractionSource = remember { MutableInteractionSource() }
-                val isBackPressed by backInteractionSource.collectIsPressedAsState()
+                val backInteraction = remember { MutableInteractionSource() }
+                val isBackPressed by backInteraction.collectIsPressedAsState()
                 val backScale by animateFloatAsState(targetValue = if (isBackPressed) 0.92f else 1f, label = "backScale")
 
                 Box(
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(40.dp)
                         .scale(backScale)
-                        .background(cardBg, RoundedCornerShape(12.dp))
+                        .background(cardBackgroundColor, RoundedCornerShape(12.dp))
                         .clip(RoundedCornerShape(12.dp))
                         .clickable(
-                            interactionSource = backInteractionSource,
+                            interactionSource = backInteraction,
                             indication = null,
                             onClick = onNavigateBack
                         ),
@@ -113,112 +106,147 @@ fun SignatureCaptureScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Voltar",
-                        tint = primaryText
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Text(
+                    text = "Assinatura Digital de Documentos",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
 
-            Text(
-                text = "Selecione a origem da assinatura ou documento para capturar a imagem com alta nitidez.",
-                fontSize = 14.sp,
-                color = Color.LightGray
-            )
-
-            // Botões de Ação (Câmara e Galeria) com efeito de toque
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            // Card 1: Capturar Assinatura
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                val camInteractionSource = remember { MutableInteractionSource() }
-                val isCamPressed by camInteractionSource.collectIsPressedAsState()
-                val camScale by animateFloatAsState(targetValue = if (isCamPressed) 0.96f else 1f, label = "camScale")
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "1. Capturar Assinatura (Foto/RG)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = goldColor)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = "Tire uma foto nítida da sua assinatura em um papel branco ou documento.", fontSize = 12.sp, color = Color.LightGray)
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Button(
-                    onClick = { cameraLauncher.launch(null) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(54.dp)
-                        .scale(camScale),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = buttonGold),
-                    interactionSource = camInteractionSource
-                ) {
-                    Icon(imageVector = Icons.Default.CameraAlt, contentDescription = null, tint = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "Tirar Foto", fontWeight = FontWeight.Bold, color = Color.White)
-                }
+                    val signCamInteraction = remember { MutableInteractionSource() }
+                    val isSignCamPressed by signCamInteraction.collectIsPressedAsState()
+                    val signCamScale by animateFloatAsState(targetValue = if (isSignCamPressed) 0.96f else 1f, label = "signCamScale")
 
-                val galInteractionSource = remember { MutableInteractionSource() }
-                val isGalPressed by galInteractionSource.collectIsPressedAsState()
-                val galScale by animateFloatAsState(targetValue = if (isGalPressed) 0.96f else 1f, label = "galScale")
+                    Button(
+                        onClick = { cameraLauncher.launch(null) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .scale(signCamScale),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor),
+                        interactionSource = signCamInteraction
+                    ) {
+                        Text("📷 Tirar Foto da Assinatura", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
 
-                OutlinedButton(
-                    onClick = { galleryLauncher.launch("image/*") },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(54.dp)
-                        .scale(galScale),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor),
-                    border = BorderStroke(1.dp, accentColor),
-                    interactionSource = galInteractionSource
-                ) {
-                    Icon(imageVector = Icons.Default.PhotoLibrary, contentDescription = null, tint = accentColor)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "Galeria", fontWeight = FontWeight.Bold, color = Color.White)
-                }
-            }
-
-            // Pré-visualização da Assinatura/Documento
-            val currentBitmap = capturedBitmap
-            if (currentBitmap != null) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(260.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = cardBg)
-                ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    if (signatureBitmap != null) {
+                        Spacer(modifier = Modifier.height(12.dp))
                         Image(
-                            bitmap = currentBitmap.asImageBitmap(),
+                            bitmap = signatureBitmap!!.asImageBitmap(),
                             contentDescription = "Assinatura capturada",
-                            modifier = Modifier.fillMaxSize().padding(12.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp)
+                                .background(Color.White, RoundedCornerShape(8.dp))
                         )
                     }
                 }
+            }
 
-                // Botão de Confirmar Assinatura com efeito de toque
-                val confInteractionSource = remember { MutableInteractionSource() }
-                val isConfPressed by confInteractionSource.collectIsPressedAsState()
-                val confScale by animateFloatAsState(targetValue = if (isConfPressed) 0.96f else 1f, label = "confScale")
+            // Card 2: Selecionar Documento Destino
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "2. Selecionar Documento", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = goldColor)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = "Escolha o documento na galeria onde a assinatura será aplicada.", fontSize = 12.sp, color = Color.LightGray)
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Button(
-                    onClick = { onSignatureReady(currentBitmap) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp)
-                        .scale(confScale),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = accentColor),
-                    interactionSource = confInteractionSource
-                ) {
-                    Text(text = "CONFIRMAR ASSINATURA", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
+                    val docInteraction = remember { MutableInteractionSource() }
+                    val isDocPressed by docInteraction.collectIsPressedAsState()
+                    val docScale by animateFloatAsState(targetValue = if (isDocPressed) 0.96f else 1f, label = "docScale")
+
+                    Button(
+                        onClick = { documentGalleryLauncher.launch("image/*") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .scale(docScale),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor),
+                        interactionSource = docInteraction
+                    ) {
+                        Text("📁 Escolher Documento da Galeria", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
-            } else {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = cardBg)
-                ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "Nenhuma imagem selecionada.\nTire uma foto ou escolha da galeria.",
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
+            }
+
+            // Card 3: Avançar para Posicionamento
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "3. Posicionar e Assinar", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = goldColor)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = "Avance para posicionar a assinatura exatamente onde desejar no documento.", fontSize = 12.sp, color = Color.LightGray)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val saveInteraction = remember { MutableInteractionSource() }
+                    val isSavePressed by saveInteraction.collectIsPressedAsState()
+                    val saveScale by animateFloatAsState(targetValue = if (isSavePressed) 0.96f else 1f, label = "saveScale")
+
+                    Button(
+                        onClick = {
+                            val currentSig = signatureBitmap
+                            val currentUri = documentUri
+
+                            if (currentSig == null || currentUri == null) {
+                                Toast.makeText(context, "Tire a foto da assinatura e escolha um documento primeiro.", Toast.LENGTH_LONG).show()
+                                return@Button
+                            }
+
+                            try {
+                                val inputStream = context.contentResolver.openInputStream(currentUri)
+                                val docBitmap = BitmapFactory.decodeStream(inputStream)
+                                inputStream?.close()
+
+                                if (docBitmap != null) {
+                                    // Envia para a MainActivity transacionar para o ecrã de posicionamento
+                                    onProceedToPlacement(currentSig, docBitmap)
+                                } else {
+                                    Toast.makeText(context, "Erro ao carregar o documento.", Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Erro: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                            .scale(saveScale),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2ECC71)),
+                        interactionSource = saveInteraction
+                    ) {
+                        Icon(imageVector = Icons.Default.Check, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("AVANÇAR PARA POSICIONAR", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
             }

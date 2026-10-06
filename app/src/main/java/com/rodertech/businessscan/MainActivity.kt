@@ -30,6 +30,7 @@ import java.io.FileOutputStream
 import com.rodertech.businessscan.screens.CnpjSearchScreen
 import com.rodertech.businessscan.screens.SettingsScreen
 import com.rodertech.businessscan.ui.theme.BusinessScanTheme
+import androidx.core.content.FileProvider
 
 class MainActivity : ComponentActivity() {
 
@@ -40,10 +41,10 @@ class MainActivity : ComponentActivity() {
 
         val userPreferences = UserPreferences(applicationContext)
         val googleWebClientId =
-            "558379015018-2um9ndso96s59ne82rf8ldd4n832d4n3.apps.googleusercontent.com"
+            "198083510769-287vessuvr02ggtmun2f02r2m5bnmunh.apps.googleusercontent.com"
 
         setContent {
-            BusinessScanTheme { // 🟢 Envolve toda a UI com o seu tema personalizado
+            BusinessScanTheme {
                 val context = LocalContext.current
                 val scope = rememberCoroutineScope()
                 val rememberMeState by userPreferences.rememberMeFlow.collectAsState(initial = false)
@@ -51,11 +52,9 @@ class MainActivity : ComponentActivity() {
                 val isLoggedIn = remember { mutableStateOf(false) }
                 val showSplash = remember { mutableStateOf(true) }
 
-                // Inicia direto na tela de busca ("search")
                 val currentScreen = remember { mutableStateOf("search") }
                 val selectedBusinessForPro = remember { mutableStateOf<Business?>(null) }
 
-                // Estados temporários para guardar os Bitmaps durante o fluxo de assinatura
                 val documentToSignBitmap = remember { mutableStateOf<Bitmap?>(null) }
                 val signatureBitmapToUse = remember { mutableStateOf<Bitmap?>(null) }
 
@@ -82,15 +81,14 @@ class MainActivity : ComponentActivity() {
                 } else {
                     when (currentScreen.value) {
                         "home" -> HomeScreen()
+
                         "document_capture" -> SignatureCaptureScreen(
                             onNavigateBack = { currentScreen.value = "search" },
-                            onSignatureReady = { bitmap ->
-                                signatureBitmapToUse.value = bitmap
-                                if (documentToSignBitmap.value != null) {
-                                    currentScreen.value = "signature_placement"
-                                } else {
-                                    currentScreen.value = "document_capture"
-                                }
+                            // Ajustado para capturar os dois bitmaps enviados pelo ecrã de captura
+                            onProceedToPlacement = { signatureBitmap, documentBitmap ->
+                                signatureBitmapToUse.value = signatureBitmap
+                                documentToSignBitmap.value = documentBitmap
+                                currentScreen.value = "signature_placement"
                             }
                         )
 
@@ -106,7 +104,6 @@ class MainActivity : ComponentActivity() {
                                     documentBitmap = doc,
                                     signatureBitmap = sig,
                                     onConfirmPosition = { offsetX, offsetY, width, height ->
-                                        // 1. Carimba o documento na posição escolhida
                                         val signedBitmap = DocumentStamper.stampSignature(
                                             documentBitmap = doc,
                                             signatureBitmap = sig,
@@ -118,15 +115,13 @@ class MainActivity : ComponentActivity() {
 
                                         val documentId = "doc_" + System.currentTimeMillis()
 
-                                        // 2. Envia criptografado para o Firebase Storage
                                         SecureDocumentRepository.uploadEncryptedDocumentToFirebase(
                                             documentId = documentId,
                                             signedBitmap = signedBitmap,
-                                            onSuccess = { /* Sucesso na nuvem */ },
-                                            onError = { /* Tratar erro se necessário */ }
+                                            onSuccess = {},
+                                            onError = {}
                                         )
 
-                                        // 3. Salva e abre o compartilhamento imediato
                                         val cachePath = File(context.cacheDir, "images")
                                         cachePath.mkdirs()
                                         val file = File(cachePath, "documento_assinado_final.png")
@@ -138,7 +133,7 @@ class MainActivity : ComponentActivity() {
                                             )
                                         }
 
-                                        val uri = androidx.core.content.FileProvider.getUriForFile(
+                                        val uri = FileProvider.getUriForFile(
                                             context,
                                             "${context.packageName}.provider",
                                             file
@@ -161,7 +156,6 @@ class MainActivity : ComponentActivity() {
                                             )
                                         )
 
-                                        // Retorna para a busca após concluir
                                         currentScreen.value = "search"
                                     }
                                 )
@@ -169,7 +163,6 @@ class MainActivity : ComponentActivity() {
                                 currentScreen.value = "document_capture"
                             }
                         }
-
 
                         "search" -> SearchScreen(
                             onLogout = {
@@ -234,7 +227,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
-            } // Fim do BusinessScanTheme
+            }
         }
     }
 }
