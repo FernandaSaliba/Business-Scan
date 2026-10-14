@@ -1,7 +1,5 @@
 package com.rodertech.businessscan.auth
 
-
-
 import android.content.Context
 import android.util.Log
 import androidx.credentials.CredentialManager
@@ -9,44 +7,94 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
-import com.rodertech.business_scan.R
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.tasks.await
 
 
+@Suppress("unused")
 class AuthManager(private val context: Context) {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-
     private val credentialManager = CredentialManager.create(context)
 
-    // --- LOGIN COM GOOGLE ---
-    suspend fun signInWithGoogle(
-        webClientId: String = "",
+    // --- MENSAGENS DE ERRO AMIGÁVEIS ---
+    fun parseAuthException(exception: Exception?): String {
+        return when (exception) {
+            is FirebaseAuthInvalidCredentialsException -> "E-mail ou senha incorretos."
+            is FirebaseAuthInvalidUserException -> "Conta não encontrada. Crie uma nova conta."
+            is FirebaseAuthUserCollisionException -> "Este e-mail já está cadastrado."
+            else -> exception?.localizedMessage ?: "Ocorreu um erro inesperado. Tente novamente."
+        }
+    }
+
+    // --- LOGIN COM E-MAIL E SENHA ---
+    suspend fun signInWithEmail(
+        email: String,
+        pass: String,
         onSuccess: (FirebaseUser) -> Unit,
         onError: (String) -> Unit
     ) {
         try {
-            val clientId = webClientId.ifEmpty {
-                runCatching { context.getString(R.string.default_web_client_id) }.getOrDefault("")
-            }
+            val authResult = auth.signInWithEmailAndPassword(email.trim(), pass).await()
+            authResult.user?.let(onSuccess) ?: onError("Falha ao obter usuário.")
+        } catch (e: Exception) {
+            onError(parseAuthException(e))
+        }
+    }
 
-            // Log de depuração para verificar se a Web Client ID está sendo carregada
-            Log.d("AuthManager", "Client ID utilizado: '$clientId'")
+    // --- CADASTRO COM E-MAIL E SENHA ---
+    suspend fun signUpWithEmail(
+        email: String,
+        pass: String,
+        onSuccess: (FirebaseUser) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        try {
+            val authResult = auth.createUserWithEmailAndPassword(email.trim(), pass).await()
+            authResult.user?.let(onSuccess) ?: onError("Falha ao criar usuário.")
+        } catch (e: Exception) {
+            onError(parseAuthException(e))
+        }
+    }
 
-            if (clientId.isEmpty()) {
-                onError("Web Client ID não configurado no google-services.json ou via parâmetro.")
-                return
-            }
+    // --- REDEFINIÇÃO DE SENHA ---
+    suspend fun resetPassword(
+        email: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        try {
+            auth.sendPasswordResetEmail(email.trim()).await()
+            onSuccess()
+        } catch (e: Exception) {
+            onError(parseAuthException(e))
+        }
+    }
+
+    // --- LOGIN COM GOOGLE ---
+    suspend fun signInWithGoogle(
+        webClientId: String = "198083510769-287vessuvr02ggtmun2f02r2m5bnmunh.apps.googleusercontent.com",
+        onSuccess: (FirebaseUser) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        try {
+            // Garantir nonce para segurança adicional e compatibilidade
+            val rawNonce = java.util.UUID.randomUUID().toString()
+            val bytes = java.security.MessageDigest.getInstance("SHA-256").digest(rawNonce.toByteArray())
+            val hashedNonce = bytes.joinToString("") { "%02x".format(it) }
 
             val googleIdOption = GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false) // Permite selecionar qualquer conta do dispositivo
-                .setServerClientId(clientId)
+                .setFilterByAuthorizedAccounts(false)
+                .setServerClientId(webClientId)
                 .setAutoSelectEnabled(false)
+                .setNonce(hashedNonce)
                 .build()
 
             val request = GetCredentialRequest.Builder()
@@ -65,30 +113,22 @@ class AuthManager(private val context: Context) {
             } else {
                 onError("Tipo de credencial inválido.")
             }
-        } catch (e: GetCredentialCancellationException) {
-            // Usuário fechou a janela de login do Google
-            onError("Login cancelado pelo usuário.")
+        } catch (_: GetCredentialCancellationException) {
+            // O utilizador cancelou a caixa de diálogo
         } catch (e: GetCredentialException) {
-            Log.e("AuthManager", "Erro no CredentialManager", e)
-            onError("Erro no Google: ${e.message} (Verifique a SHA-1 e a Web Client ID no Firebase)")
+            Log.e("AuthManager", "Erro no CredentialManager: ${e.errorMessage}", e)
+            onError("Erro no Google: [${e.type}] ${e.message}")
         } catch (e: Exception) {
-            Log.e("AuthManager", "Erro genérico no login", e)
+            Log.e("AuthManager", "Erro no login Google", e)
             onError(e.localizedMessage ?: "Erro na autenticação do Google.")
         }
     }
 
-
-
     fun logout() {
-
         auth.signOut()
-
     }
 
-
-
     fun getCurrentUser(): FirebaseUser? = auth.currentUser
-
 
     // --- EXCLUSÃO DE CONTA ---
     suspend fun deleteAccount(
@@ -96,21 +136,14 @@ class AuthManager(private val context: Context) {
         onError: (String) -> Unit
     ) {
         try {
-            val user = auth.currentUser
-            if (user == null) {
-                onError("Nenhum usuário logado no momento.")
+            val user = auth.currentUser ?: run {
+                onError("Nenhum usuário logado.")
                 return
             }
-
-            // Deleta o usuário diretamente do Firebase Auth
             user.delete().await()
-
-            // Encerra a sessão local por segurança
             auth.signOut()
-
             onSuccess()
         } catch (e: Exception) {
-            Log.e("AuthManager", "Erro ao excluir conta", e)
             val message = if (e.message?.contains("recent-login") == true) {
                 "Por segurança, faça login novamente antes de excluir a conta."
             } else {
@@ -119,5 +152,4 @@ class AuthManager(private val context: Context) {
             onError(message)
         }
     }
-
 }

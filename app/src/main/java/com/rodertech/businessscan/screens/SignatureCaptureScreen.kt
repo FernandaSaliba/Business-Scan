@@ -2,14 +2,16 @@ package com.rodertech.businessscan.screens
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Paint
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
@@ -19,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,7 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.asAndroidPath
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.core.graphics.createBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,21 +43,15 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun SignatureCaptureScreen(
     onNavigateBack: () -> Unit,
-    onProceedToPlacement: (Bitmap, Bitmap) -> Unit // <--- Alterado para receber assinatura e documento juntos
+    onProceedToPlacement: (Bitmap, Bitmap) -> Unit
 ) {
     val context = LocalContext.current
 
-    var signatureBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var documentUri by remember { mutableStateOf<Uri?>(null) }
 
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap: Bitmap? ->
-        if (bitmap != null) {
-            signatureBitmap = bitmap
-            Toast.makeText(context, "Assinatura capturada com sucesso!", Toast.LENGTH_SHORT).show()
-        }
-    }
+    // Controle do desenho da assinatura
+    val path = remember { mutableStateOf(Path()) }
+    var isSignatureDrawn by remember { mutableStateOf(false) }
 
     // Launcher para escolher o documento base na galeria
     val documentGalleryLauncher = rememberLauncherForActivityResult(
@@ -121,45 +122,80 @@ fun SignatureCaptureScreen(
                 )
             }
 
-            // Card 1: Capturar Assinatura
+            // Card 1: Desenhar Assinatura na Tela
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "1. Capturar Assinatura (Foto/RG)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = goldColor)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "Tire uma foto nítida da sua assinatura em um papel branco ou documento.", fontSize = 12.sp, color = Color.LightGray)
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    val signCamInteraction = remember { MutableInteractionSource() }
-                    val isSignCamPressed by signCamInteraction.collectIsPressedAsState()
-                    val signCamScale by animateFloatAsState(targetValue = if (isSignCamPressed) 0.96f else 1f, label = "signCamScale")
-
-                    Button(
-                        onClick = { cameraLauncher.launch(null) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(44.dp)
-                            .scale(signCamScale),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = buttonPurpleColor),
-                        interactionSource = signCamInteraction
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("📷 Tirar Foto da Assinatura", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "1. Desenhe sua Assinatura",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = goldColor
+                        )
+
+                        // Botão para limpar a assinatura
+                        IconButton(
+                            onClick = {
+                                path.value = Path()
+                                isSignatureDrawn = false
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Limpar",
+                                tint = Color.LightGray
+                            )
+                        }
                     }
 
-                    if (signatureBitmap != null) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Image(
-                            bitmap = signatureBitmap!!.asImageBitmap(),
-                            contentDescription = "Assinatura capturada",
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Use o dedo ou caneta stylus para assinar no quadro branco abaixo.",
+                        fontSize = 12.sp,
+                        color = Color.LightGray
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Quadro de Desenho (Canvas)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp)
+                            .background(Color.White, RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(12.dp))
+                    ) {
+                        Canvas(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(100.dp)
-                                .background(Color.White, RoundedCornerShape(8.dp))
-                        )
+                                .fillMaxSize()
+                                .pointerInput(Unit) {
+                                    detectDragGestures(
+                                        onDragStart = { offset ->
+                                            path.value.moveTo(offset.x, offset.y)
+                                        },
+                                        onDrag = { change, _ ->
+                                            change.consume()
+                                            path.value.lineTo(change.position.x, change.position.y)
+                                            // Força a recomposição do Canvas para desenhar o traço em tempo real
+                                            path.value = Path().apply { addPath(path.value) }
+                                            isSignatureDrawn = true
+                                        }
+                                    )
+                                }
+                        ) {
+                            drawPath(
+                                path = path.value,
+                                color = Color.Black,
+                                style = Stroke(width = 6f)
+                            )
+                        }
                     }
                 }
             }
@@ -213,22 +249,24 @@ fun SignatureCaptureScreen(
 
                     Button(
                         onClick = {
-                            val currentSig = signatureBitmap
                             val currentUri = documentUri
 
-                            if (currentSig == null || currentUri == null) {
-                                Toast.makeText(context, "Tire a foto da assinatura e escolha um documento primeiro.", Toast.LENGTH_LONG).show()
+                            if (!isSignatureDrawn || currentUri == null) {
+                                Toast.makeText(context, "Desenhe a assinatura e escolha um documento primeiro.", Toast.LENGTH_LONG).show()
                                 return@Button
                             }
 
                             try {
+                                // 1. Converte o desenho (Path do Canvas) em um Bitmap transparente
+                                val signatureBitmap = generateBitmapFromPath(path.value)
+
+                                // 2. Abre o documento selecionado
                                 val inputStream = context.contentResolver.openInputStream(currentUri)
                                 val docBitmap = BitmapFactory.decodeStream(inputStream)
                                 inputStream?.close()
 
                                 if (docBitmap != null) {
-                                    // Envia para a MainActivity transacionar para o ecrã de posicionamento
-                                    onProceedToPlacement(currentSig, docBitmap)
+                                    onProceedToPlacement(signatureBitmap, docBitmap)
                                 } else {
                                     Toast.makeText(context, "Erro ao carregar o documento.", Toast.LENGTH_SHORT).show()
                                 }
@@ -252,4 +290,26 @@ fun SignatureCaptureScreen(
             }
         }
     }
+}
+
+// Função auxiliar para converter o desenho em um Bitmap limpo e transparente
+private fun generateBitmapFromPath(
+    path: Path,
+    width: Int = 600,
+    height: Int = 300
+): Bitmap {
+    val bitmap = createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bitmap)
+
+    val paint = Paint().apply {
+        color = android.graphics.Color.BLACK
+        style = Paint.Style.STROKE
+        strokeWidth = 8f
+        isAntiAlias = true
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
+
+    canvas.drawPath(path.asAndroidPath(), paint)
+    return bitmap
 }

@@ -1,9 +1,10 @@
 package com.rodertech.businessscan.screens
 
 import android.content.Intent
-import androidx.core.net.toUri
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -30,11 +31,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.auth.FirebaseAuth
+import androidx.core.net.toUri
 import com.rodertech.businessscan.auth.AuthManager
 import com.rodertech.businessscan.data.UserPreferences
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.background
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +57,7 @@ fun SettingsScreen(
     val cardBackgroundColor = Color(0xFF282D4F)
     val goldColor = Color(0xFFFFC107)
     val orangeButtonColor = Color(0xFFE67E22)
-    val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email ?: "Usuário Conectado"
+    val currentUserEmail = authManager.getCurrentUser()?.email ?: "Usuário Conectado"
 
     Scaffold(
         topBar = {
@@ -212,7 +212,7 @@ fun SettingsScreen(
                                 .scale(subScale),
                             shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.Red.copy(alpha = 0.5f)),
+                            border = BorderStroke(1.dp, Color.Red.copy(alpha = 0.5f)),
                             interactionSource = subInteraction
                         ) {
                             Text("Cancelar ou Gerenciar Assinatura", fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -294,7 +294,7 @@ fun SettingsScreen(
                     .scale(deleteScale),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFE74C3C)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE74C3C).copy(alpha = 0.5f)),
+                border = BorderStroke(1.dp, Color(0xFFE74C3C).copy(alpha = 0.5f)),
                 interactionSource = deleteInteraction
             ) {
                 Icon(imageVector = Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))

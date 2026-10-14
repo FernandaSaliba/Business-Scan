@@ -14,19 +14,19 @@
       },
       "oauth_client": [
         {
+          "client_id": "198083510769-aablphfe0nlu47uromt67irl6dgla68o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rodertech.businessscan",
+            "certificate_hash": "d61a7657f64474f773827dd4fc212ace8520a08a"
+          }
+        },
+        {
           "client_id": "198083510769-l1tjs82q1b0to33491ni9tn932p4d6lt.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.rodertech.businessscan",
             "certificate_hash": "bb635d021b0133115ab7d355f0eadd59c133701d"
-          }
-        },
-        {
-          "client_id": "198083510769-tldq302bkpncvr2nqak88t71iat1qvmu.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.rodertech.businessscan",
-            "certificate_hash": "4e3ddbafae1c27e60c797c225e2b2f16861741dc"
           }
         },
         {

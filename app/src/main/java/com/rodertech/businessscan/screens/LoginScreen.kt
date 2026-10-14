@@ -25,32 +25,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.credentials.CredentialManager
-import androidx.credentials.CustomCredential
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.GetCredentialCancellationException
-import androidx.credentials.exceptions.GetCredentialException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.FirebaseAuthInvalidUserException
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.auth.GoogleAuthProvider
-import kotlinx.coroutines.launch
 import com.rodertech.business_scan.R
+import com.rodertech.businessscan.auth.AuthManager
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    webClientId: String = "",
+    webClientId: String = "198083510769-287vessuvr02ggtmun2f02r2m5bnmunh.apps.googleusercontent.com",
     onLoginSuccess: (rememberMe: Boolean, email: String) -> Unit
 ) {
     var email by remember { mutableStateOf("") }
@@ -60,23 +48,13 @@ fun LoginScreen(
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val auth = remember { FirebaseAuth.getInstance() }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    val fallbackClientId = stringResource(R.string.default_web_client_id)
+    val authManager = remember { AuthManager(context) }
 
     val isEmailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
     val isPasswordValid = password.length >= 6
-
-    fun traduzirErroFirebase(exception: Exception?): String {
-        return when (exception) {
-            is FirebaseAuthInvalidCredentialsException -> "E-mail ou senha incorretos."
-            is FirebaseAuthInvalidUserException -> "Conta não encontrada. Crie uma nova conta."
-            is FirebaseAuthUserCollisionException -> "Este e-mail já está cadastrado."
-            else -> exception?.localizedMessage ?: "Ocorreu um erro inesperado. Tente novamente."
-        }
-    }
 
     fun realizarLogin() {
         keyboardController?.hide()
@@ -90,17 +68,21 @@ fun LoginScreen(
         }
 
         isLoading = true
-        auth.signInWithEmailAndPassword(email.trim(), password)
-            .addOnCompleteListener { task ->
-                isLoading = false
-                if (task.isSuccessful) {
+        coroutineScope.launch {
+            authManager.signInWithEmail(
+                email = email,
+                pass = password,
+                onSuccess = { user ->
+                    isLoading = false
                     Toast.makeText(context, "Bem-vindo de volta!", Toast.LENGTH_SHORT).show()
-                    onLoginSuccess(rememberMe, email.trim())
-                } else {
-                    val erroFormatado = traduzirErroFirebase(task.exception)
-                    Toast.makeText(context, erroFormatado, Toast.LENGTH_LONG).show()
+                    onLoginSuccess(rememberMe, user.email ?: "")
+                },
+                onError = { erro ->
+                    isLoading = false
+                    Toast.makeText(context, erro, Toast.LENGTH_LONG).show()
                 }
-            }
+            )
+        }
     }
 
     fun realizarCadastro() {
@@ -115,17 +97,21 @@ fun LoginScreen(
         }
 
         isLoading = true
-        auth.createUserWithEmailAndPassword(email.trim(), password)
-            .addOnCompleteListener { task ->
-                isLoading = false
-                if (task.isSuccessful) {
+        coroutineScope.launch {
+            authManager.signUpWithEmail(
+                email = email,
+                pass = password,
+                onSuccess = { user ->
+                    isLoading = false
                     Toast.makeText(context, "Conta criada com sucesso!", Toast.LENGTH_SHORT).show()
-                    onLoginSuccess(rememberMe, email.trim())
-                } else {
-                    val erroFormatado = traduzirErroFirebase(task.exception)
-                    Toast.makeText(context, erroFormatado, Toast.LENGTH_LONG).show()
+                    onLoginSuccess(rememberMe, user.email ?: "")
+                },
+                onError = { erro ->
+                    isLoading = false
+                    Toast.makeText(context, erro, Toast.LENGTH_LONG).show()
                 }
-            }
+            )
+        }
     }
 
     fun redefinirSenha() {
@@ -133,68 +119,34 @@ fun LoginScreen(
             Toast.makeText(context, "Digite seu e-mail para redefinir a senha.", Toast.LENGTH_SHORT).show()
             return
         }
-        auth.sendPasswordResetEmail(email.trim())
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
+        coroutineScope.launch {
+            authManager.resetPassword(
+                email = email,
+                onSuccess = {
                     Toast.makeText(context, "E-mail de redefinição enviado!", Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(context, "Erro ao enviar e-mail.", Toast.LENGTH_SHORT).show()
+                },
+                onError = { erro ->
+                    Toast.makeText(context, erro, Toast.LENGTH_SHORT).show()
                 }
-            }
+            )
+        }
     }
 
     fun realizarLoginGoogle() {
-        val clientId = webClientId.ifEmpty { fallbackClientId }
-
-        if (clientId.isEmpty()) {
-            Toast.makeText(context, "webClientId do Google não configurado.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
         isLoading = true
         coroutineScope.launch {
-            try {
-                val credentialManager = CredentialManager.create(context)
-                val googleIdOption = GetGoogleIdOption.Builder()
-                    .setFilterByAuthorizedAccounts(false)
-                    .setServerClientId(clientId)
-                    .setAutoSelectEnabled(false)
-                    .build()
-
-                val request = GetCredentialRequest.Builder()
-                    .addCredentialOption(googleIdOption)
-                    .build()
-
-                val result = credentialManager.getCredential(request = request, context = context)
-                val credential = result.credential
-
-                if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                    val firebaseCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
-
-                    auth.signInWithCredential(firebaseCredential).addOnCompleteListener { task ->
-                        isLoading = false
-                        if (task.isSuccessful) {
-                            val userEmail = auth.currentUser?.email ?: ""
-                            Toast.makeText(context, "Bem-vindo!", Toast.LENGTH_SHORT).show()
-                            onLoginSuccess(rememberMe, userEmail)
-                        } else {
-                            Toast.makeText(context, traduzirErroFirebase(task.exception), Toast.LENGTH_LONG).show()
-                        }
-                    }
-                } else {
+            authManager.signInWithGoogle(
+                webClientId = webClientId,
+                onSuccess = { user ->
                     isLoading = false
-                    Toast.makeText(context, "Tipo de credencial inválido.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Bem-vindo!", Toast.LENGTH_SHORT).show()
+                    onLoginSuccess(rememberMe, user.email ?: "")
+                },
+                onError = { erro ->
+                    isLoading = false
+                    Toast.makeText(context, erro, Toast.LENGTH_LONG).show()
                 }
-            } catch (_: GetCredentialCancellationException) {
-                isLoading = false
-            } catch (_: GetCredentialException) {
-                isLoading = false
-                Toast.makeText(context, "Erro nas credenciais do Google. Verifique a chave Web Client ID.", Toast.LENGTH_LONG).show()
-            } catch (e: Exception) {
-                isLoading = false
-                Toast.makeText(context, "Erro no Google: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-            }
+            )
         }
     }
 

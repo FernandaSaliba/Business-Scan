@@ -476,18 +476,21 @@ fun SearchScreen(
             UnlockDialog(
                 featureTitle = showUnlockDialogFor!!,
                 onDismiss = { showUnlockDialogFor = null },
-                onWatchAd = { },
+                onWatchAd = { showUnlockDialogFor = null },
                 onWatchAdForOcr = {
+                    showUnlockDialogFor = null
                     rewardedManager.showAd {
                         onNavigateToOcr()
                     }
                 },
                 onWatchAdForSignature = {
+                    showUnlockDialogFor = null
                     rewardedManager.showAd {
                         onNavigateToSignature()
                     }
                 },
                 onGoPremium = {
+                    showUnlockDialogFor = null
                     onOpenPremium(currentBusiness)
                 }
             )
