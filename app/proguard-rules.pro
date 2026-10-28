@@ -25,3 +25,13 @@
 -keepattributes *Annotation*
 -keepattributes EnclosingMethod
 -keepattributes InnerClasses
+
+# --- Google Play Billing (Assinaturas e Compras no App) ---
+-keep class com.android.vending.billing.** { *; }
+
+# --- Google Mobile Ads / AdMob (Anúncios Recompensados) ---
+-keep class com.google.android.gms.ads.** { *; }
+-keep class com.google.ads.** { *; }
+
+# --- Google Play Services ---
+-keep class com.google.android.gms.common.** { *; }

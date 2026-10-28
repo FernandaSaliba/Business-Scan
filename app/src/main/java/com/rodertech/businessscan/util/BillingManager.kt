@@ -23,7 +23,7 @@ class BillingManager(
 
     companion object {
         // IDs exatos cadastrados no Google Play Console
-        const val SUBSCRIPTION_MONTHLY_ID = "1_businessscan_monthly_pro" // R$ 29,90
+        const val SUBSCRIPTION_MONTHLY_ID = "1_businessscan_monthly_sub" // R$ 29,90
         const val SUBSCRIPTION_YEARLY_ID = "2pro_yearly"                 // R$ 19,90/mês
     }
 
