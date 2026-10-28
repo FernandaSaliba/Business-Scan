@@ -22,6 +22,7 @@ import com.rodertech.businessscan.screens.CnpjSearchScreen
 import com.rodertech.businessscan.screens.HomeScreen
 import com.rodertech.businessscan.screens.LoginScreen
 import com.rodertech.businessscan.screens.OcrScreen
+import com.rodertech.businessscan.screens.PaymentScreen
 import com.rodertech.businessscan.screens.PremiumScreen
 import com.rodertech.businessscan.screens.SearchScreen
 import com.rodertech.businessscan.screens.SettingsScreen
@@ -209,7 +210,7 @@ class MainActivity : ComponentActivity() {
                             onBack = { currentScreen.value = "search" },
                             onOpenPremium = { business ->
                                 selectedBusinessForPro.value = business
-                                currentScreen.value = "premium"
+                                currentScreen.value = "payment"
                             }
                         )
 
@@ -219,6 +220,13 @@ class MainActivity : ComponentActivity() {
                                 currentScreen.value = "search"
                             },
                             onSubscribeSuccess = {
+                                currentScreen.value = "search"
+                            }
+                        )
+
+                        "payment" -> PaymentScreen(
+                            empresaDetalhada = selectedBusinessForPro.value,
+                            onBack = {
                                 currentScreen.value = "search"
                             }
                         )

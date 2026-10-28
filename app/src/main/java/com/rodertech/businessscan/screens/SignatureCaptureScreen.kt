@@ -304,12 +304,31 @@ private fun generateBitmapFromPath(
     val paint = Paint().apply {
         color = android.graphics.Color.BLACK
         style = Paint.Style.STROKE
-        strokeWidth = 8f
+        strokeWidth = 6f
         isAntiAlias = true
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
     }
 
+    // Calcula os limites reais do traço desenhado
+    val bounds = android.graphics.RectF()
+    path.asAndroidPath().computeBounds(bounds, true)
+
     canvas.drawPath(path.asAndroidPath(), paint)
+
+    // Se o desenho for válido, faz um recorte justo com margem de segurança (padding)
+    if (!bounds.isEmpty && bounds.width() > 0 && bounds.height() > 0) {
+        val padding = 20f
+        val left = (bounds.left - padding).coerceAtLeast(0f).toInt()
+        val top = (bounds.top - padding).coerceAtLeast(0f).toInt()
+        val right = (bounds.right + padding).coerceAtMost(width.toFloat()).toInt()
+        val bottom = (bounds.bottom + padding).coerceAtMost(height.toFloat()).toInt()
+
+        val cropWidth = (right - left).coerceAtLeast(1)
+        val cropHeight = (bottom - top).coerceAtLeast(1)
+
+        return Bitmap.createBitmap(bitmap, left, top, cropWidth, cropHeight)
+    }
+
     return bitmap
 }

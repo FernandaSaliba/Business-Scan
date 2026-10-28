@@ -16,7 +16,7 @@ import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.tasks.await
-
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("unused")
 class AuthManager(private val context: Context) {
@@ -84,43 +84,72 @@ class AuthManager(private val context: Context) {
         onSuccess: (FirebaseUser) -> Unit,
         onError: (String) -> Unit
     ) {
-        try {
-            // Garantir nonce para segurança adicional e compatibilidade
-            val rawNonce = java.util.UUID.randomUUID().toString()
-            val bytes = java.security.MessageDigest.getInstance("SHA-256").digest(rawNonce.toByteArray())
-            val hashedNonce = bytes.joinToString("") { "%02x".format(it) }
+        val maxRetries = 2
+        var currentAttempt = 0
 
-            val googleIdOption = GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(webClientId)
-                .setAutoSelectEnabled(false)
-                .setNonce(hashedNonce)
-                .build()
+        while (currentAttempt < maxRetries) {
+            try {
+                // Gerar nonce seguro a cada tentativa
+                val rawNonce = java.util.UUID.randomUUID().toString()
+                val bytes = java.security.MessageDigest.getInstance("SHA-256").digest(rawNonce.toByteArray())
+                val hashedNonce = bytes.joinToString("") { "%02x".format(it) }
 
-            val request = GetCredentialRequest.Builder()
-                .addCredentialOption(googleIdOption)
-                .build()
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(webClientId)
+                    .setAutoSelectEnabled(false)
+                    .setNonce(hashedNonce)
+                    .build()
 
-            val result = credentialManager.getCredential(request = request, context = context)
-            val credential = result.credential
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
 
-            if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                val firebaseCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
+                val result = credentialManager.getCredential(request = request, context = context)
+                val credential = result.credential
 
-                val authResult = auth.signInWithCredential(firebaseCredential).await()
-                authResult.user?.let(onSuccess) ?: onError("Falha ao obter usuário do Firebase.")
-            } else {
-                onError("Tipo de credencial inválido.")
+                if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                    val firebaseCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
+
+                    val authResult = auth.signInWithCredential(firebaseCredential).await()
+                    val user = authResult.user
+                    if (user != null) {
+                        onSuccess(user)
+                        return
+                    } else {
+                        onError("Falha ao obter usuário do Firebase.")
+                        return
+                    }
+                } else {
+                    onError("Tipo de credencial inválido.")
+                    return
+                }
+            } catch (_: GetCredentialCancellationException) {
+                // Usuário fechou a janela de seleção; encerra sem exibir erro na tela
+                return
+            } catch (e: GetCredentialException) {
+                Log.e("AuthManager", "Erro CredentialManager (Tentativa ${currentAttempt + 1}): ${e.type} - ${e.message}", e)
+
+                // Se for falta de credencial pronta (comum na 1ª inicialização do Play Services), tenta 1 reexecução silenciosa
+                if (e.type.endsWith("NO_CREDENTIALS") && currentAttempt < maxRetries - 1) {
+                    currentAttempt++
+                    kotlinx.coroutines.delay(500.milliseconds) // Pequena pausa para sincronização do serviço
+                    continue
+                }
+
+                val userMessage = if (e.type.endsWith("NO_CREDENTIALS")) {
+                    "Não foi possível carregar a sua conta Google. Tente novamente em instantes."
+                } else {
+                    "Erro ao conectar com o Google: ${e.localizedMessage ?: e.message}"
+                }
+                onError(userMessage)
+                return
+            } catch (e: Exception) {
+                Log.e("AuthManager", "Erro inesperado no login Google", e)
+                onError(parseAuthException(e))
+                return
             }
-        } catch (_: GetCredentialCancellationException) {
-            // O utilizador cancelou a caixa de diálogo
-        } catch (e: GetCredentialException) {
-            Log.e("AuthManager", "Erro no CredentialManager: ${e.errorMessage}", e)
-            onError("Erro no Google: [${e.type}] ${e.message}")
-        } catch (e: Exception) {
-            Log.e("AuthManager", "Erro no login Google", e)
-            onError(e.localizedMessage ?: "Erro na autenticação do Google.")
         }
     }
 

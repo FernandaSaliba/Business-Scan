@@ -70,9 +70,10 @@ fun SignaturePlacementScreen(
             Image(
                 bitmap = signatureBitmap.asImageBitmap(),
                 contentDescription = "Assinatura Arrastável",
+                contentScale = ContentScale.Fit, // Preserva todos os limites do desenho
                 modifier = Modifier
                     .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
-                    .size(160.dp, 80.dp)
+                    .size(200.dp, 100.dp) // Proporção 2:1 idêntica à do Bitmap gerado (600x300)
                     .pointerInput(Unit) {
                         detectDragGestures { change, dragAmount ->
                             change.consume()
@@ -80,8 +81,7 @@ fun SignaturePlacementScreen(
                             offsetY += dragAmount.y
                         }
                     }
-            )
-        }
+            )}
 
         // 3. Botão de confirmação
         Button(

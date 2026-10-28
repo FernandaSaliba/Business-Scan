@@ -14,8 +14,8 @@ android {
         minSdk = 24
         targetSdk = 34
 
-        versionCode = 9
-        versionName = "1.8"
+        versionCode = 11
+        versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -81,7 +81,7 @@ dependencies {
     // Rede e Persistencia Local
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
     implementation("com.squareup.retrofit2:converter-gson:3.0.0")
-    implementation("androidx.datastore:datastore-preferences:1.2.1")
+    implementation("androidx.datastore:datastore-preferences:1.3.0")
 
     // RevenueCat Purchases SDK
     implementation(libs.revenuecat.purchases)

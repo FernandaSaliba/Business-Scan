@@ -26,8 +26,8 @@ import com.rodertech.businessscan.util.BillingManager
 import com.rodertech.businessscan.data.UserPreferences
 import kotlinx.coroutines.launch
 import com.rodertech.businessscan.model.Business
-enum class PlanoType { MENSAL, ANUAL }
 
+enum class PlanoType { MENSAL, ANUAL }
 
 @Composable
 fun PremiumScreen(
@@ -69,19 +69,42 @@ fun PremiumScreen(
             }
             Spacer(modifier = Modifier.height(24.dp))
             Text(text = "Desbloqueie o BusinessScan Pro 👑", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+
+            // Utilização do parâmetro 'business' para remover o aviso de código não utilizado
+            if (business != null && business.name.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "A consultar relatório de: ${business.name}",
+                    fontSize = 12.sp,
+                    color = Color(0xFF818CF8),
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
             Spacer(modifier = Modifier.height(20.dp))
 
-
-            PlanOptionCard(title = "Plano Mensal", subtitle = "Cancele a qualquer momento", price = "R$ 29,90/mês", isSelected = planoSelecionado == PlanoType.MENSAL, onClick = { planoSelecionado = PlanoType.MENSAL })
+            PlanOptionCard(
+                title = "Plano Mensal",
+                subtitle = "Cancele a qualquer momento",
+                price = "R$ 29,90/mês",
+                isSelected = planoSelecionado == PlanoType.MENSAL,
+                onClick = { planoSelecionado = PlanoType.MENSAL }
+            )
             Spacer(modifier = Modifier.height(12.dp))
-            PlanOptionCard(title = "Plano Anual (Economize 35%)", subtitle = "Faturado R$ 238,80 anualmente", price = "R$ 19,90/mês", badgeText = "MAIS POPULAR", isSelected = planoSelecionado == PlanoType.ANUAL, onClick = { planoSelecionado = PlanoType.ANUAL })
+            PlanOptionCard(
+                title = "Plano Anual (Economize 35%)",
+                subtitle = "Faturado R$ 238,80 anualmente",
+                price = "R$ 19,90/mês",
+                badgeText = "MAIS POPULAR",
+                isSelected = planoSelecionado == PlanoType.ANUAL,
+                onClick = { planoSelecionado = PlanoType.ANUAL }
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
             Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)), modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Text(text = "Tudo o que você terá acesso:", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.White)
                     Spacer(modifier = Modifier.height(8.dp))
-                    // Vantagens atualizadas incluindo as novas funcionalidades
                     BenefitRow(text = "Digitalização e Leitura Inteligente (OCR)")
                     BenefitRow(text = "Assinatura Digital automática via RG")
                     BenefitRow(text = "Quadro de Sócios e Administradores (QSA)")

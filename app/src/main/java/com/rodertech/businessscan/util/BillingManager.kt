@@ -22,8 +22,9 @@ class BillingManager(
 ) : PurchasesUpdatedListener {
 
     companion object {
-        const val SUBSCRIPTION_MONTHLY_ID = "business_scan_premium_monthly" // R$ 29,90
-        const val SUBSCRIPTION_YEARLY_ID = "business_scan_premium_yearly"   // R$ 19,90/mês
+        // IDs exatos cadastrados no Google Play Console
+        const val SUBSCRIPTION_MONTHLY_ID = "1_businessscan_monthly_pro" // R$ 29,90
+        const val SUBSCRIPTION_YEARLY_ID = "2pro_yearly"                 // R$ 19,90/mês
     }
 
     private var billingClient: BillingClient = BillingClient.newBuilder(context)
@@ -71,7 +72,6 @@ class BillingManager(
             .setProductList(listOf(productMonthly, productYearly))
             .build()
 
-        // Ajuste no callback: extrai o 'productDetailsList' a partir de 'queryProductDetailsResult'
         billingClient.queryProductDetailsAsync(params) { billingResult, queryProductDetailsResult ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 queryProductDetailsResult.productDetailsList.forEach { details ->
@@ -155,9 +155,5 @@ class BillingManager(
                 onSubscriptionStatusChanged(hasActiveSubscription)
             }
         }
-    }
-
-    fun endConnection() {
-        billingClient.endConnection()
     }
 }

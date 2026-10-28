@@ -16,6 +16,7 @@ import com.rodertech.businessscan.model.Business
 import java.text.NumberFormat
 import java.util.Locale
 
+@Suppress("Unused")
 @Composable
 fun PaymentScreen(
     empresaDetalhada: Business? = null,
@@ -96,7 +97,8 @@ fun PaymentScreen(
                     }
 
                     if (empresaDetalhada.capitalSocial > 0.0) {
-                        val formatadorMoeda = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
+                        val localePtBr = Locale.Builder().setLanguage("pt").setRegion("BR").build()
+                        val formatadorMoeda = NumberFormat.getCurrencyInstance(localePtBr)
                         ItemDetalhe(
                             rotulo = "Capital Social",
                             valor = formatadorMoeda.format(empresaDetalhada.capitalSocial)
@@ -106,7 +108,7 @@ fun PaymentScreen(
                     if (empresaDetalhada.endereco.isNotEmpty()) {
                         ItemDetalhe(
                             rotulo = "Localização",
-                            valor = "${empresaDetalhada.endereco} - ${empresaDetalhada.municipio}/${empresaDetalhada.uf}"
+                            valor = "${empresaDetalhada.endereco}\n${empresaDetalhada.municipio}/${empresaDetalhada.uf}"
                         )
                     }
                 }
@@ -181,4 +183,3 @@ fun ItemDetalhe(
         Text(text = valor, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
     }
 }
-
