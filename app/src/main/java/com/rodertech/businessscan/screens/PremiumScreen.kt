@@ -93,8 +93,8 @@ fun PremiumScreen(
             Spacer(modifier = Modifier.height(12.dp))
             PlanOptionCard(
                 title = "Plano Anual (Economize 35%)",
-                subtitle = "Faturado R$ 238,80 anualmente",
-                price = "R$ 19,90/mês",
+                subtitle = "Renovação automática anual",
+                price = "R$ 238,80/ano",
                 badgeText = "MAIS POPULAR",
                 isSelected = planoSelecionado == PlanoType.ANUAL,
                 onClick = { planoSelecionado = PlanoType.ANUAL }

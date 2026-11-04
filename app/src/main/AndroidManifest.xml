@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Permissões de Rede -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Permissão para uso da câmera -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
 
     <application
         android:name="com.rodertech.businessscan.MainApplication"
@@ -14,7 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BusinessScan">
 
-        <!-- Nome corrigido: com.google.android.gms.ads.APPLICATION_ID -->
+        <!-- APPLICATION_ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-1038880007093527~8213464647"/>

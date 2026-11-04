@@ -149,16 +149,22 @@ fun PaymentScreen(
                 Text("Plano Pro Anual", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    "R$ 19,90 / mês",
+                    "Cobrança Anual",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    "Renovação automática a cada ano",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = { /* Lógica de checkout/pagamento */ },
+                    onClick = { /* Lógica de checkout/pagamento com o id "2annual-plan" */ },
                     modifier = Modifier.fillMaxWidth().height(50.dp)
                 ) {
                     Text("Assinar Agora e Liberar TUDO")
