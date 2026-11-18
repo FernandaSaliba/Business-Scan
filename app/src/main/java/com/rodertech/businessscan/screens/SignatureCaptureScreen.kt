@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,8 +35,10 @@ import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.core.graphics.createBitmap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -47,11 +50,12 @@ fun SignatureCaptureScreen(
 ) {
     val context = LocalContext.current
 
-    var documentUri by remember { mutableStateOf<Uri?>(null) }
+    var documentUri by rememberSaveable { mutableStateOf<Uri?>(null) }
 
-    // Controle do desenho da assinatura
+    // Controle do desenho da assinatura e tamanho real do Canvas em pixels
     val path = remember { mutableStateOf(Path()) }
     var isSignatureDrawn by remember { mutableStateOf(false) }
+    var canvasSize by remember { mutableStateOf(IntSize(600, 300)) }
 
     // Launcher para escolher o documento base na galeria
     val documentGalleryLauncher = rememberLauncherForActivityResult(
@@ -175,6 +179,11 @@ fun SignatureCaptureScreen(
                         Canvas(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .onSizeChanged { size ->
+                                    if (size.width > 0 && size.height > 0) {
+                                        canvasSize = size
+                                    }
+                                }
                                 .pointerInput(Unit) {
                                     detectDragGestures(
                                         onDragStart = { offset ->
@@ -257,13 +266,15 @@ fun SignatureCaptureScreen(
                             }
 
                             try {
-                                // 1. Converte o desenho (Path do Canvas) em um Bitmap transparente
-                                val signatureBitmap = generateBitmapFromPath(path.value)
+                                // 1. Converte o desenho (Path do Canvas) usando o tamanho real do quadro na tela
+                                val signatureBitmap = generateBitmapFromPath(
+                                    path = path.value,
+                                    width = canvasSize.width,
+                                    height = canvasSize.height
+                                )
 
-                                // 2. Abre o documento selecionado
-                                val inputStream = context.contentResolver.openInputStream(currentUri)
-                                val docBitmap = BitmapFactory.decodeStream(inputStream)
-                                inputStream?.close()
+                                // 2. Abre o documento selecionado com limite seguro de memória para câmeras Samsung
+                                val docBitmap = decodeSampledBitmapFromUri(context, currentUri)
 
                                 if (docBitmap != null) {
                                     onProceedToPlacement(signatureBitmap, docBitmap)
@@ -292,13 +303,42 @@ fun SignatureCaptureScreen(
     }
 }
 
+// Carrega imagens grandes da galeria sem estourar a memória RAM
+private fun decodeSampledBitmapFromUri(
+    context: android.content.Context,
+    uri: Uri
+): Bitmap? {
+    val maxDimension = 2048
+    val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    context.contentResolver.openInputStream(uri)?.use {
+        BitmapFactory.decodeStream(it, null, options)
+    }
+
+    var inSampleSize = 1
+    if (options.outHeight > maxDimension || options.outWidth > maxDimension) {
+        val halfHeight = options.outHeight / 2
+        val halfWidth = options.outWidth / 2
+        while ((halfHeight / inSampleSize) >= maxDimension && (halfWidth / inSampleSize) >= maxDimension) {
+            inSampleSize *= 2
+        }
+    }
+
+    val finalOptions = BitmapFactory.Options().apply { this.inSampleSize = inSampleSize }
+    return context.contentResolver.openInputStream(uri)?.use {
+        BitmapFactory.decodeStream(it, null, finalOptions)
+    }
+}
+
 // Função auxiliar para converter o desenho em um Bitmap limpo e transparente
 private fun generateBitmapFromPath(
     path: Path,
-    width: Int = 600,
-    height: Int = 300
+    width: Int,
+    height: Int
 ): Bitmap {
-    val bitmap = createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val safeWidth = width.coerceAtLeast(1)
+    val safeHeight = height.coerceAtLeast(1)
+
+    val bitmap = createBitmap(safeWidth, safeHeight, Bitmap.Config.ARGB_8888)
     val canvas = android.graphics.Canvas(bitmap)
 
     val paint = Paint().apply {
@@ -321,8 +361,8 @@ private fun generateBitmapFromPath(
         val padding = 20f
         val left = (bounds.left - padding).coerceAtLeast(0f).toInt()
         val top = (bounds.top - padding).coerceAtLeast(0f).toInt()
-        val right = (bounds.right + padding).coerceAtMost(width.toFloat()).toInt()
-        val bottom = (bounds.bottom + padding).coerceAtMost(height.toFloat()).toInt()
+        val right = (bounds.right + padding).coerceAtMost(safeWidth.toFloat()).toInt()
+        val bottom = (bounds.bottom + padding).coerceAtMost(safeHeight.toFloat()).toInt()
 
         val cropWidth = (right - left).coerceAtLeast(1)
         val cropHeight = (bottom - top).coerceAtLeast(1)

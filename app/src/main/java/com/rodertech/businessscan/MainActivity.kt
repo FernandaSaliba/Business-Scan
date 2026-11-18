@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import com.google.android.gms.ads.MobileAds
@@ -53,10 +54,10 @@ class MainActivity : ComponentActivity() {
                 val authManager = remember { AuthManager(context) }
                 val rememberMeState by userPreferences.rememberMeFlow.collectAsState(initial = false)
 
-                val isLoggedIn = remember { mutableStateOf(false) }
-                val showSplash = remember { mutableStateOf(true) }
+                val isLoggedIn = rememberSaveable { mutableStateOf(false) }
+                val showSplash = rememberSaveable { mutableStateOf(true) }
 
-                val currentScreen = remember { mutableStateOf("search") }
+                val currentScreen = rememberSaveable { mutableStateOf("search") }
                 val selectedBusinessForPro = remember { mutableStateOf<Business?>(null) }
 
                 val documentToSignBitmap = remember { mutableStateOf<Bitmap?>(null) }

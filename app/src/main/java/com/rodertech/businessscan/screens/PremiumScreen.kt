@@ -70,7 +70,6 @@ fun PremiumScreen(
             Spacer(modifier = Modifier.height(24.dp))
             Text(text = "Desbloqueie o BusinessScan Pro 👑", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
 
-            // Utilização do parâmetro 'business' para remover o aviso de código não utilizado
             if (business != null && business.name.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -93,8 +92,9 @@ fun PremiumScreen(
             Spacer(modifier = Modifier.height(12.dp))
             PlanOptionCard(
                 title = "Plano Anual (Economize 35%)",
-                subtitle = "Renovação automática anual",
-                price = "R$ 238,80/ano",
+                subtitle = "Faturado R$ 238,80 anualmente",
+                price = "R$ 19,90/mês",
+                subPrice = "Total: R$ 238,80/ano",
                 badgeText = "MAIS POPULAR",
                 isSelected = planoSelecionado == PlanoType.ANUAL,
                 onClick = { planoSelecionado = PlanoType.ANUAL }
@@ -139,18 +139,54 @@ fun PremiumScreen(
 }
 
 @Composable
-fun PlanOptionCard(title: String, subtitle: String, price: String, badgeText: String? = null, isSelected: Boolean, onClick: () -> Unit) {
+fun PlanOptionCard(
+    title: String,
+    subtitle: String,
+    price: String,
+    subPrice: String? = null,
+    badgeText: String? = null,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
     val borderColor = if (isSelected) Color(0xFF818CF8) else Color.Transparent
     val backgroundColor = if (isSelected) Color(0xFF312E81).copy(alpha = 0.5f) else Color(0xFF1E293B)
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = backgroundColor), modifier = Modifier.fillMaxWidth().border(width = if (isSelected) 2.dp else 0.dp, color = borderColor, shape = RoundedCornerShape(16.dp)).clickable { onClick() }) {
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(width = if (isSelected) 2.dp else 0.dp, color = borderColor, shape = RoundedCornerShape(16.dp))
+            .clickable { onClick() }
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            if (badgeText != null) Surface(color = Color(0xFFD97706), shape = RoundedCornerShape(6.dp)) { Text(text = badgeText, color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(6.dp, 2.dp)) }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            if (badgeText != null) {
+                Surface(color = Color(0xFFD97706), shape = RoundedCornerShape(6.dp)) {
+                    Text(
+                        text = badgeText,
+                        color = Color.White,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(6.dp, 2.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = title, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
                     Text(text = subtitle, fontSize = 11.sp, color = Color.LightGray)
                 }
-                Text(text = price, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, color = Color(0xFFFBBF24))
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(text = price, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, color = Color(0xFFFBBF24))
+                    if (subPrice != null) {
+                        Text(text = subPrice, fontSize = 10.sp, color = Color.LightGray, fontWeight = FontWeight.Medium)
+                    }
+                }
             }
         }
     }

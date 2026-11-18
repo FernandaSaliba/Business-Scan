@@ -2,7 +2,9 @@ package com.rodertech.businessscan.util
 
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.util.Log
+import android.widget.Toast
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
@@ -14,8 +16,18 @@ class RewardedAdManager(private val context: Context) {
     private var rewardedAd: RewardedAd? = null
     private var isloading = false
 
-    // Cole aqui o seu ID de Bloco de Anúncio Premiado criado no AdMob (formato ca-app-pub-xxx/yyy)
-    private val adUnitId = "ca-app-pub-1038880007093527/5187270032"
+    // ID oficial de teste do Google para o Teste Fechado (evita bloqueio e No Fill antes da publicação)
+    // Quando for aprovado para PRODUÇÃO, substitua por: "ca-app-pub-1038880007093527/5187270032"
+    private val adUnitId = "ca-app-pub-3940256099942544/5224354917"
+
+    private fun findActivity(ctx: Context): Activity? {
+        var current = ctx
+        while (current is ContextWrapper) {
+            if (current is Activity) return current
+            current = current.baseContext
+        }
+        return null
+    }
 
     fun loadAd() {
         if (rewardedAd == null && !isloading) {
@@ -26,7 +38,7 @@ class RewardedAdManager(private val context: Context) {
             MobileAds.setRequestConfiguration(configuration)
 
             val adRequest = AdRequest.Builder().build()
-            RewardedAd.load(context, adUnitId, adRequest, object : RewardedAdLoadCallback() {
+            RewardedAd.load(context.applicationContext, adUnitId, adRequest, object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {
                     rewardedAd = ad
                     isloading = false
@@ -43,7 +55,7 @@ class RewardedAdManager(private val context: Context) {
     }
 
     fun showAd(onRewardEarned: () -> Unit) {
-        val activity = context as? Activity
+        val activity = findActivity(context)
         if (activity != null && rewardedAd != null) {
             rewardedAd?.show(activity) { _ ->
                 // O usuário assistiu ao vídeo até o fim e ganhou a recompensa!
@@ -54,6 +66,7 @@ class RewardedAdManager(private val context: Context) {
             }
         } else {
             Log.d("RewardedAd", "O anúncio ainda não está pronto.")
+            Toast.makeText(context, "Carregando vídeo, tente novamente em instantes...", Toast.LENGTH_SHORT).show()
             // Opcional: chamar loadAd() aqui caso não esteja carregado
             loadAd()
         }

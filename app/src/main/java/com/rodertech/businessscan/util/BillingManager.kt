@@ -24,7 +24,8 @@ class BillingManager(
     companion object {
         // IDs exatos cadastrados no Google Play Console
         const val SUBSCRIPTION_MONTHLY_ID = "1_businessscan_monthly_sub" // R$ 29,90
-        const val SUBSCRIPTION_YEARLY_ID = "2pro_yearly"                 // R$ 238,80/mês
+        const val SUBSCRIPTION_YEARLY_ID = "2pro_yearly" // ID principal da assinatura
+        const val BASE_PLAN_YEARLY_ID = "2annual-plan"   // ID do plano básico anual
     }
 
     private var billingClient: BillingClient = BillingClient.newBuilder(context)
@@ -90,7 +91,14 @@ class BillingManager(
             return
         }
 
-        val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken ?: ""
+        val offerDetails = if (planoType == PlanoType.ANUAL) {
+            details.subscriptionOfferDetails?.firstOrNull { it.basePlanId == BASE_PLAN_YEARLY_ID }
+                ?: details.subscriptionOfferDetails?.firstOrNull()
+        } else {
+            details.subscriptionOfferDetails?.firstOrNull()
+        }
+
+        val offerToken = offerDetails?.offerToken ?: ""
 
         val productDetailsParamsList = listOf(
             BillingFlowParams.ProductDetailsParams.newBuilder()

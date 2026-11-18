@@ -66,12 +66,23 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                     val apiEmpresa = response.body()!!
                     val businessObj = apiEmpresa.toBusiness()
 
-                    // Guarda a empresa automaticamente ao encontrar
-                    selectedBusiness = businessObj
+                    if (businessObj.name.isBlank()) {
+                        _uiState.value = SearchUiState.Error("Dados da empresa indisponíveis ou CNPJ inválido.")
+                    } else {
+                        // Guarda a empresa automaticamente ao encontrar
+                        selectedBusiness = businessObj
 
-                    _uiState.value = SearchUiState.Success(businessObj)
+                        _uiState.value = SearchUiState.Success(businessObj)
+                    }
                 } else {
-                    _uiState.value = SearchUiState.Error("CNPJ não encontrado.")
+                    val mensagemErro = when (response.code()) {
+                        400 -> "CNPJ inválido. Verifique os números digitados."
+                        404 -> "CNPJ não encontrado na base da Receita."
+                        429 -> "Muitas consultas seguidas. Aguarde 1 minuto e tente novamente."
+                        500, 502, 503, 504 -> "Servidor da Receita instável no momento. Tente novamente em instantes."
+                        else -> "Erro ao consultar CNPJ (Código ${response.code()}). Tente novamente."
+                    }
+                    _uiState.value = SearchUiState.Error(mensagemErro)
                 }
             } catch (e: Exception) {
                 _uiState.value = SearchUiState.Error("Erro de conexão: ${e.localizedMessage ?: "Falha na busca"}")
